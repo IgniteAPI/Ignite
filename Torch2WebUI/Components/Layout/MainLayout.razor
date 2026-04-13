@@ -1,5 +1,7 @@
 ﻿@using Torch2WebUI.Services
+@using Torch2WebUI.Configs
 @inject ThemeService Theme
+@inject Torch2WebUICfg Config
 @inherits LayoutComponentBase
 
 <MudThemeProvider Theme="@Theme.CurrentTheme" IsDarkMode="@Theme.IsDarkMode" />
@@ -9,7 +11,7 @@
 <MudLayout>
     <MudAppBar Elevation="1">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
-        <MudText Typo="Typo.h5" Class="ml-3">Torch2 Panel</MudText>
+        <MudText Typo="Typo.h5" Class="ml-3">@Config.PanelName</MudText>
         <MudSpacer />
         <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
         <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" />
@@ -34,7 +36,18 @@
 
     protected override void OnInitialized()
     {
+        Theme.OnThemeChanged += OnThemeChanged;
         base.OnInitialized();
+    }
+
+    public void Dispose()
+    {
+        Theme.OnThemeChanged -= OnThemeChanged;
+    }
+
+    private async Task OnThemeChanged()
+    {
+        await InvokeAsync(StateHasChanged);
     }
 
     private void DrawerToggle()
