@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using NLog;
 using Torch2API.DTOs.Chat;
 using Torch2WebUI.Configs;
 
@@ -16,6 +17,7 @@ namespace Torch2WebUI.Services.InstanceServices
         private readonly ConcurrentDictionary<string, Queue<ChatMessage>> _histories = new();
         private readonly object _lock = new();
         private readonly Torch2WebUICfg _webConfig;
+        private readonly Logger _logger = LogManager.GetCurrentClassLogger();
         public int MaxPerInstance => _webConfig.Logging.InstanceChatViewerMaxEntries;
 
         /// <summary>Raised when a new chat message is appended: (instanceId, message).</summary>
@@ -25,7 +27,7 @@ namespace Torch2WebUI.Services.InstanceServices
 
         public InstanceChatService(Torch2WebUICfg webConfig) { _webConfig = webConfig; }
 
-        public void Append(string instanceId, ChatMessage message)
+        public void Append(string instanceId, ChatMessage message, string? instanceName = null)
         {
             lock (_lock)
             {
@@ -33,6 +35,11 @@ namespace Torch2WebUI.Services.InstanceServices
                 q.Enqueue(message);
                 if (q.Count > MaxPerInstance)
                     q.Dequeue();
+            }
+
+            if (_webConfig.Logging.EnableInstanceLogging && instanceName is not null)
+            {
+                _logger.Info($"[{instanceName}] {message.DisplayName}: {message.Message}");
             }
 
             OnChat?.Invoke(instanceId, message);

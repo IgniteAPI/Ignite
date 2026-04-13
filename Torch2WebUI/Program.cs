@@ -91,6 +91,8 @@ namespace Torch2WebUI
 
         }
 
+
+        //Convert to file?
         private static void SetupInstanceLogging(Torch2WebUICfg config)
         {
             if (!config.Logging.EnableInstanceLogging)
@@ -98,21 +100,34 @@ namespace Torch2WebUI
 
             var logConfig = new NLog.Config.LoggingConfiguration();
 
-            // Create file target for instance logs
             var fileTarget = new FileTarget("instanceFile")
             {
                 FileName = Path.Combine(config.Logging.LogDirectory, "instances.log"),
-                Layout = "${longdate} | ${level:uppercase=true:padding=8} | ${message}",
-                MaxArchiveFiles = 10,
-                ArchiveOldFileOnStartup = true,
+                ArchiveFileName = Path.Combine(config.Logging.LogDirectory, "instances.{#}.log"),
+                Layout = "${longdate} | ${level:uppercase=true:padding=5} | ${message}",
+                ArchiveEvery = FileArchivePeriod.Day,
+                ArchiveNumbering = ArchiveNumberingMode.Date,
+                ArchiveDateFormat = "yyyy-MM-dd",
+                MaxArchiveFiles = config.Logging.MaxLogAgeDays,
             };
 
-            // Parse the log level from config
+            var chatFileTarget = new FileTarget("chatFile")
+            {
+                FileName = Path.Combine(config.Logging.LogDirectory, "chat.log"),
+                ArchiveFileName = Path.Combine(config.Logging.LogDirectory, "chat.{#}.log"),
+                Layout = "${longdate} | ${level:uppercase=true:padding=5} | ${message}",
+                ArchiveEvery = FileArchivePeriod.Day,
+                ArchiveNumbering = ArchiveNumberingMode.Date,
+                ArchiveDateFormat = "yyyy-MM-dd",
+                MaxArchiveFiles = config.Logging.MaxLogAgeDays,
+            };
+
             var minLogLevel = NLog.LogLevel.FromString(config.Logging.LogLevel);
 
-            // Add file target and route only InstanceLogService logs to file (no console)
             logConfig.AddTarget(fileTarget);
+            logConfig.AddTarget(chatFileTarget);
             logConfig.AddRule(minLogLevel, NLog.LogLevel.Fatal, fileTarget, "Torch2WebUI.Services.InstanceServices.InstanceLogService*");
+            logConfig.AddRule(minLogLevel, NLog.LogLevel.Fatal, chatFileTarget, "Torch2WebUI.Services.InstanceServices.InstanceChatService*");
 
             LogManager.Configuration = logConfig;
         }
