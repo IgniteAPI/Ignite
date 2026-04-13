@@ -30,6 +30,7 @@
 
 
   <ItemGroup>
+    <Folder Include="APIControllers\Logs\" />
     <Folder Include="Services\World\" />
   </ItemGroup>
 </Project>

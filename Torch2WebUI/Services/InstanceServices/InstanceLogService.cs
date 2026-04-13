@@ -39,6 +39,13 @@ namespace Torch2WebUI.Services.InstanceServices
 
         public void Append(string instanceId, LogLine entry, string? instanceName = null)
         {
+            // Set the logger name from the incoming InstanceName field and set the actual instance name
+            if (string.IsNullOrEmpty(entry.LoggerName))
+                entry.LoggerName = entry.InstanceName;
+
+            if (instanceName is not null)
+                entry.InstanceName = instanceName;
+
             lock (_lock)
             {
                 var q = _histories.GetOrAdd(instanceId, _ => new Queue<LogLine>(MaxPerInstance));
@@ -78,6 +85,20 @@ namespace Torch2WebUI.Services.InstanceServices
                 return _histories.TryGetValue(instanceId, out var q)
                     ? q.ToArray()
                     : Array.Empty<LogLine>();
+            }
+        }
+
+        public LogLine[] GetAllHistory()
+        {
+            lock (_lock)
+            {
+                var allLogs = new List<LogLine>();
+                foreach (var queue in _histories.Values)
+                {
+                    allLogs.AddRange(queue);
+                }
+                // Sort by timestamp to maintain chronological order
+                return allLogs.OrderBy(l => l.Timestamp).ToArray();
             }
         }
 
