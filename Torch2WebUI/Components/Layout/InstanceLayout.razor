@@ -8,6 +8,7 @@
 @inject ThemeService Theme
 @inject NavigationManager Nav
 @inject InstanceManager InstanceManager
+@inject InstanceCommandService CommandService
 @implements IDisposable
 
 <MudThemeProvider Theme="@Theme.CurrentTheme" IsDarkMode="@Theme.IsDarkMode" />
@@ -177,13 +178,13 @@
     private Task StartInstance()
     {
         if (_instance is null) return Task.CompletedTask;
-        return InstanceManager.SendCommand(_instance, "Server/Start");
+        return CommandService.SendCommand(_instance, "Server/Start");
     }
 
     private Task StopInstance()
     {
         if (_instance is null) return Task.CompletedTask;
-        return InstanceManager.SendCommand(_instance, "Server/Stop");
+        return CommandService.SendCommand(_instance, "Server/Stop");
     }
 
     private Color GetStatusColor(ServerStatusEnum status) => status switch

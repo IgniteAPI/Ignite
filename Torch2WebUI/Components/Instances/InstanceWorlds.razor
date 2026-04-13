@@ -5,6 +5,7 @@
 @layout InstanceLayout
 
 @inject InstanceManager InstanceManager
+@inject InstanceCommandService CommandService
 @inject IDialogService DialogService
 
 <PageTitle>Instance Worlds</PageTitle>
@@ -157,8 +158,8 @@
         _instance = InstanceManager.GetInstanceByID(InstanceId);
         InstanceManager.OnChange += OnInstanceUpdated;
 
-        await InstanceManager.SendCommand(_instance, "Config/Worlds/List");
-        await InstanceManager.SendCommand(_instance, "Config/Profiles/List");
+        await CommandService.SendCommand(_instance, "Config/Worlds/List");
+        await CommandService.SendCommand(_instance, "Config/Profiles/List");
     }
 
     private void OnInstanceUpdated(string updatedId)
@@ -200,7 +201,7 @@
 
     private async Task LinkWorldToModList(WorldInfo world, string modListName)
     {
-        await InstanceManager.SendCommand(_instance, "Config/Worlds/SetModList", new
+        await CommandService.SendCommand(_instance, "Config/Worlds/SetModList", new
         {
             worldname = world.Name,
             modlistname = modListName
@@ -234,7 +235,7 @@
         if (result.Data is not CreateWorldDialog.CreateWorldDialogResult payload)
             return;
 
-        await InstanceManager.SendCommand(
+        await CommandService.SendCommand(
             _instance,
             "Config/Worlds/Create",
             new
@@ -268,7 +269,7 @@
 
         if (!result.Canceled && result.Data is string confirmedWorldName)
         {
-            await InstanceManager.SendCommand(
+            await CommandService.SendCommand(
                 _instance,
                 "Config/Worlds/Delete",
                 new { worldname = confirmedWorldName });

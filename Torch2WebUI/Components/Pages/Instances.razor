@@ -6,6 +6,7 @@
 @inject NavigationManager Navigation
 
 @inject InstanceManager InstanceManager
+@inject InstanceCommandService CommandService
 
 <PageTitle>Instance Dashboard</PageTitle>
 
@@ -202,7 +203,7 @@ else
 
                         <MudButton Size="Size.Small"
                                    Variant="Variant.Text"
-                                   OnClick="@(() => InstanceManager.SendCommand(instance, "Config/Profiles/List"))"
+                                   OnClick="@(() => CommandService.SendCommand(instance, "Config/Profiles/List"))"
                                    Color="Color.Warning">
                             GetInstances
                         </MudButton>
@@ -212,7 +213,7 @@ else
                         {
                             <MudButton Size="Size.Small"
                                        Variant="Variant.Text"
-                                       OnClick="@(() => InstanceManager.SendCommand(instance, "Server/Start"))"
+                                       OnClick="@(() => CommandService.SendCommand(instance, "Server/Start"))"
                                        Color="Color.Warning">
                                 Start
                             </MudButton>
@@ -222,7 +223,7 @@ else
                         {
                             <MudButton Size="Size.Small"
                                        Variant="Variant.Text"
-                                       OnClick="@(() => InstanceManager.SendCommand(instance, "Server/Stop"))"
+                                       OnClick="@(() => CommandService.SendCommand(instance, "Server/Stop"))"
                                        Color="Color.Warning">
                                 Stop
                             </MudButton>

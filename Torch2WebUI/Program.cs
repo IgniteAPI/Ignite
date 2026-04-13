@@ -1,4 +1,6 @@
 using MudBlazor.Services;
+using NLog;
+using NLog.Targets;
 using Torch2WebUI.Components;
 using Torch2WebUI.Configs;
 using Torch2WebUI.Services;
@@ -14,6 +16,9 @@ namespace Torch2WebUI
             // Load Web Yaml configuration
             Torch2WebUICfg config = Torch2WebUICfg.LoadYaml(Path.Combine(AppContext.BaseDirectory, "torch2webui.yml"));
 
+            // Configure NLog for instance logging
+            SetupInstanceLogging(config);
+
             var builder = WebApplication.CreateBuilder(args);
  
             builder.Services.AddControllers();
@@ -26,11 +31,12 @@ namespace Torch2WebUI
             builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 
             builder.Services.AddSingleton<InstanceManager>();
-            builder.Services.AddSingleton<InstanceLogService>();
             builder.Services.AddSingleton<InstanceChatService>();
             builder.Services.AddSingleton<InstanceSocketManager>();
+            builder.Services.AddSingleton<InstanceCommandService>();
             builder.Services.AddSingleton<ThemeService>();
             builder.Services.AddSingleton(config);
+            builder.Services.AddSocketMessageHandlers(typeof(Program).Assembly);
             builder.Services.SetupSQL();
             builder.Logging.ClearProviders();
 
@@ -82,9 +88,33 @@ namespace Torch2WebUI
 
             app.Run();
 
-            
+
+        }
+
+        private static void SetupInstanceLogging(Torch2WebUICfg config)
+        {
+            if (!config.Logging.EnableInstanceLogging)
+                return;
+
+            var logConfig = new NLog.Config.LoggingConfiguration();
+
+            // Create file target for instance logs
+            var fileTarget = new FileTarget("instanceFile")
+            {
+                FileName = Path.Combine(config.Logging.LogDirectory, "instances.log"),
+                Layout = "${longdate} | ${level:uppercase=true:padding=8} | ${message}",
+                MaxArchiveFiles = 10,
+                ArchiveOldFileOnStartup = true,
+            };
+
+            // Parse the log level from config
+            var minLogLevel = NLog.LogLevel.FromString(config.Logging.LogLevel);
+
+            // Add file target and route only InstanceLogService logs to file (no console)
+            logConfig.AddTarget(fileTarget);
+            logConfig.AddRule(minLogLevel, NLog.LogLevel.Fatal, fileTarget, "Torch2WebUI.Services.InstanceServices.InstanceLogService*");
+
+            LogManager.Configuration = logConfig;
         }
     }
 }
-
-

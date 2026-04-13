@@ -6,7 +6,6 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Torch2API.Constants;
-using Torch2API.DTOs.Logs;
 using Torch2API.DTOs.WebSockets;
 
 namespace Torch2WebUI.Services.InstanceServices
@@ -18,12 +17,16 @@ namespace Torch2WebUI.Services.InstanceServices
         private const string NormalClosureMessage = "Closing";
 
         private readonly ConcurrentDictionary<string, WebSocket> _sockets = new();
-        private readonly InstanceLogService _logService;
+        private readonly IReadOnlyDictionary<string, ISocketMessageHandler> _handlers;
         private readonly ILogger<InstanceSocketManager> _logger;
 
-        public InstanceSocketManager(InstanceLogService logService, ILogger<InstanceSocketManager> logger)
+        public InstanceSocketManager(
+            IEnumerable<ISocketMessageHandler> handlers,
+            ILogger<InstanceSocketManager> logger)
         {
-            _logService = logService;
+            _handlers = handlers
+                .SelectMany(h => h.HandledCommands.Select(cmd => (cmd, handler: h)))
+                .ToDictionary(x => x.cmd, x => x.handler, StringComparer.OrdinalIgnoreCase);
             _logger = logger;
         }
 
@@ -144,39 +147,15 @@ namespace Torch2WebUI.Services.InstanceServices
 
             try
             {
-                switch (envelope.Command)
-                {
-                    case TorchConstants.WsLog:
-                        HandleLogMessage(instanceId, envelope);
-                        break;
-
-                    case TorchConstants.WsLogHistory:
-                        HandleLogHistoryMessage(instanceId, envelope);
-                        break;
-
-                    default:
-                        _logger.LogDebug("Unknown command for instance {InstanceId}: {Command}", instanceId, envelope.Command);
-                        break;
-                }
+                if (_handlers.TryGetValue(envelope.Command, out var handler))
+                    handler.Handle(instanceId, envelope);
+                else
+                    _logger.LogDebug("No handler for command {Command} on instance {InstanceId}", envelope.Command, instanceId);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error handling message for instance {InstanceId}", instanceId);
             }
-        }
-
-        private void HandleLogMessage(string instanceId, SocketMsgEnvelope envelope)
-        {
-            var entry = envelope.Args.Deserialize<LogLine>(TorchConstants.JsonOptions);
-            if (entry is not null)
-                _logService.Append(instanceId, entry);
-        }
-
-        private void HandleLogHistoryMessage(string instanceId, SocketMsgEnvelope envelope)
-        {
-            var history = envelope.Args.Deserialize<LogLine[]>(TorchConstants.JsonOptions);
-            if (history is not null)
-                _logService.AppendHistory(instanceId, history);
         }
 
         public async Task SendCommandAsync(string instanceId, string rawcommand, object args)

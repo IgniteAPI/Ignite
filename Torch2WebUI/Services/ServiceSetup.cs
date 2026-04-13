@@ -1,8 +1,14 @@
-﻿using Microsoft.EntityFrameworkCore; // Add this using directive
-using Torch2WebUI.Services.SQL;
-using Torch2WebUI.Services.ModServices;
-using FluentMigrator.Runner;
+﻿using FluentMigrator.Runner;
+using Microsoft.EntityFrameworkCore; // Add this using directive
+using NLog;
+using NLog.Config;
+using NLog.Targets;
+using System.Reflection;
 using System.Threading.Tasks; // Add this using directive
+using Torch2WebUI.Configs;
+using Torch2WebUI.Services.InstanceServices;
+using Torch2WebUI.Services.ModServices;
+using Torch2WebUI.Services.SQL;
 
 namespace Torch2WebUI.Services
 {
@@ -31,6 +37,29 @@ namespace Torch2WebUI.Services
             Services.AddHttpClient<ISteamService, ModServices.SteamService>();
         }
 
+        /// <summary>
+        /// Scans <paramref name="assembly"/> for every concrete <see cref="ISocketMessageHandler"/> implementation,
+        /// registers each as a singleton of its own type (if not already registered), then adds a second
+        /// <see cref="ISocketMessageHandler"/> registration that resolves the same singleton instance.
+        /// New handlers are picked up automatically with no changes to Program.cs.
+        /// </summary>
+        public static IServiceCollection AddSocketMessageHandlers(this IServiceCollection services, Assembly assembly)
+        {
+            var handlerTypes = assembly.GetTypes()
+                .Where(t => t.IsClass && !t.IsAbstract && typeof(ISocketMessageHandler).IsAssignableFrom(t));
+
+            foreach (var handlerType in handlerTypes)
+            {
+                if (services.All(sd => sd.ServiceType != handlerType))
+                    services.AddSingleton(handlerType);
+
+                var captured = handlerType;
+                services.AddSingleton<ISocketMessageHandler>(sp => (ISocketMessageHandler)sp.GetRequiredService(captured));
+            }
+
+            return services;
+        }
+
         public static async Task MigrateDatabase(this IServiceProvider serviceProvider)
         {
             using (var scope = serviceProvider.CreateScope())
@@ -47,6 +76,5 @@ namespace Torch2WebUI.Services
                 await dbContext.SaveChangesAsync();
             }
         }
-
     }
 }

@@ -3,6 +3,7 @@
 @using Torch2WebUI.Models
 @inject IDialogService DialogService
 @inject InstanceManager InstanceManager
+@inject InstanceCommandService CommandService
 
 <MudDialog>
 
@@ -130,7 +131,7 @@
     protected override async Task OnInitializedAsync()
     {
         InstanceManager.OnChange += OnInstanceUpdated;
-        await InstanceManager.SendCommand(Instance, "Config/Worlds/Custom");
+        await CommandService.SendCommand(Instance, "Config/Worlds/Custom");
     }
 
     private void OnInstanceUpdated(string updatedId)

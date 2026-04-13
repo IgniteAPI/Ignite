@@ -10,6 +10,7 @@
 @layout InstanceLayout
 
 @inject InstanceManager InstanceManager
+@inject InstanceCommandService CommandService
 @inject IDialogService DialogService
 
 <PageTitle>Instance Profiles</PageTitle>
@@ -468,9 +469,9 @@
         _selectedProfile = _instance?.Profiles.FirstOrDefault();
         _previousprofilename = _selectedProfile?.InstanceName;
 
-        await InstanceManager.SendCommand(_instance, "Config/Profiles/List");
+        await CommandService.SendCommand(_instance, "Config/Profiles/List");
         // request dedicated schema from the instance
-        await InstanceManager.SendCommand(_instance, "Config/Profiles/dedicatedcfg");
+        await CommandService.SendCommand(_instance, "Config/Profiles/dedicatedcfg");
     }
 
     private void OnInstanceUpdated(string updatedId)
@@ -494,7 +495,7 @@
         if (_instance != null && !string.IsNullOrWhiteSpace(profile?.InstanceName) && _selectedProfile?.InstanceName != _previousprofilename)
         {
             _previousprofilename = _selectedProfile?.InstanceName;
-            await InstanceManager.SendCommand(_instance, "Config/Profiles/dedicatedcfg", new { profile = profile.InstanceName });
+            await CommandService.SendCommand(_instance, "Config/Profiles/dedicatedcfg", new { profile = profile.InstanceName });
         }
 
         StateHasChanged();
@@ -527,8 +528,8 @@
 
         if (result.Data is string name && !string.IsNullOrWhiteSpace(name))
         {
-            await InstanceManager.SendCommand(_instance, "Config/Profiles/Create", new { name = name.Trim() });
-            await InstanceManager.SendCommand(_instance, "Config/Profiles/List");
+            await CommandService.SendCommand(_instance, "Config/Profiles/Create", new { name = name.Trim() });
+            await CommandService.SendCommand(_instance, "Config/Profiles/List");
         }
     }
 
@@ -555,13 +556,13 @@
 
         if (!result.Canceled && result.Data is string confirmedName)
         {
-            await InstanceManager.SendCommand(_instance, "Config/Profiles/Delete", new { name = confirmedName });
+            await CommandService.SendCommand(_instance, "Config/Profiles/Delete", new { name = confirmedName });
             if (_selectedProfile != null && string.Equals(_selectedProfile.InstanceName, confirmedName, StringComparison.OrdinalIgnoreCase))
             {
                 _selectedProfile = null;
                 _originalProfileName = null;
             }
-            await InstanceManager.SendCommand(_instance, "Config/Profiles/List");
+            await CommandService.SendCommand(_instance, "Config/Profiles/List");
         }
     }
 
@@ -590,10 +591,10 @@
             logsmaxage = _selectedProfile.LogsMaxAge
         };
 
-        await InstanceManager.SendCommand(_instance, "Config/Profiles/Update", payload);
+        await CommandService.SendCommand(_instance, "Config/Profiles/Update", payload);
 
         // refresh list
-        await InstanceManager.SendCommand(_instance, "Config/Profiles/List");
+        await CommandService.SendCommand(_instance, "Config/Profiles/List");
     }
 
     // Implemented load: tells the instance to load the selected profile.
@@ -602,10 +603,10 @@
         if (_instance is null || _selectedProfile is null)
             return;
 
-        await InstanceManager.SendCommand(_instance, "Config/Profiles/Load", new { name = _selectedProfile.InstanceName });
+        await CommandService.SendCommand(_instance, "Config/Profiles/Load", new { name = _selectedProfile.InstanceName });
 
         // refresh list / server state after request
-        await InstanceManager.SendCommand(_instance, "Config/Profiles/List");
+        await CommandService.SendCommand(_instance, "Config/Profiles/List");
     }
 
     // New: send updated dedicated config DTO to client command (model must be JSON string)
@@ -618,12 +619,12 @@
         var modelJson = JsonSerializer.Serialize(_dedicatedConfig, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
         // Send to the client command. The client command signature expects a string 'model' parameter.
-        await InstanceManager.SendCommand(_instance, "Config/Profiles/dedicatedcfg", new { model = modelJson, profile = _selectedProfile.InstanceName });
+        await CommandService.SendCommand(_instance, "Config/Profiles/dedicatedcfg", new { model = modelJson, profile = _selectedProfile.InstanceName });
 
         // Optionally request the client to resend current schema after applying (refresh),
         // client implementation already posts back DedicatedSchema via WebAPI when applying.
         // But request a fresh schema to ensure UI sync:
-        await InstanceManager.SendCommand(_instance, "Config/Profiles/dedicatedcfg");
+        await CommandService.SendCommand(_instance, "Config/Profiles/dedicatedcfg");
     }
 
     public void Dispose()

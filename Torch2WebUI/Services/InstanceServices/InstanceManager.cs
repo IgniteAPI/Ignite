@@ -23,7 +23,6 @@ namespace Torch2WebUI.Services.InstanceServices
         private readonly Timer CleanupTimer;
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly IMemoryCache _cache;
-        private readonly InstanceSocketManager _InstanceSocketManager;
 
         public event Action<string>? OnChange;
         private void NotifyStateChanged(string instanceid) => OnChange?.Invoke(instanceid);
@@ -31,9 +30,8 @@ namespace Torch2WebUI.Services.InstanceServices
         //Do not need to notify the page when its a bind
         public bool EnableServerDiscovery { get; set; } = false;
 
-        public InstanceManager(IServiceScopeFactory scopeFactory, IMemoryCache cache, InstanceSocketManager socketmanager)
+        public InstanceManager(IServiceScopeFactory scopeFactory, IMemoryCache cache)
         {
-            _InstanceSocketManager = socketmanager;
             _cache = cache;
             _scopeFactory = scopeFactory;
             CleanupTimer = new Timer(_timeout.Add(TimeSpan.FromSeconds(2)));
@@ -296,14 +294,12 @@ namespace Torch2WebUI.Services.InstanceServices
             return ActiveInstances.Values.Where(x => !x.Configured).ToList();
         }
 
-        public Task SendCommand(TorchInstanceBase instanceBase, string command)
+        public string GetInstanceName(string instanceId)
         {
-            return _InstanceSocketManager.SendCommandAsync(instanceBase.InstanceID, command, new { });
-        }
-
-        public Task SendCommand(TorchInstanceBase instanceBase, string command, object args)
-        {
-            return _InstanceSocketManager.SendCommandAsync(instanceBase.InstanceID, command, args);
+            //Should we be using getinstancebyid here and return instance.Name?
+            if (ActiveInstances.TryGetValue(instanceId, out var instance))
+                return instance.Name ?? instanceId;
+            return instanceId;
         }
     }
 }
