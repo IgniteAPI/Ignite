@@ -29,6 +29,9 @@ namespace Torch2WebUI.Services.InstanceServices
 
         public void Append(string instanceId, ChatMessage message, string? instanceName = null)
         {
+            if (instanceName is not null)
+                message.InstanceName = instanceName;
+
             lock (_lock)
             {
                 var q = _histories.GetOrAdd(instanceId, _ => new Queue<ChatMessage>(MaxPerInstance));
@@ -66,6 +69,20 @@ namespace Torch2WebUI.Services.InstanceServices
                 return _histories.TryGetValue(instanceId, out var q)
                     ? q.ToArray()
                     : Array.Empty<ChatMessage>();
+            }
+        }
+
+        public ChatMessage[] GetAllHistory()
+        {
+            lock (_lock)
+            {
+                var allMessages = new List<ChatMessage>();
+                foreach (var queue in _histories.Values)
+                {
+                    allMessages.AddRange(queue);
+                }
+                // Sort by timestamp to maintain chronological order
+                return allMessages.OrderBy(m => m.Timestamp).ToArray();
             }
         }
     }

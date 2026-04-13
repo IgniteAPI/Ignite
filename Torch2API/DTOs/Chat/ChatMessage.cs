@@ -4,6 +4,7 @@ namespace Torch2API.DTOs.Chat
 {
     public class ChatMessage
     {
+        public string InstanceName { get; set; }
         public ulong SteamId { get; set; }
         public string DisplayName { get; set; }
         public string Message { get; set; }
