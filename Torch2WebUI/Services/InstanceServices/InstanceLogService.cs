@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Torch2API.DTOs.Logs;
+using Torch2WebUI.Configs;
 
 namespace Torch2WebUI.Services.InstanceServices
 {
@@ -11,13 +12,18 @@ namespace Torch2WebUI.Services.InstanceServices
     /// </summary>
     public class InstanceLogService
     {
-        public static int MaxPerInstance = 2000;
 
         private readonly ConcurrentDictionary<string, Queue<LogLine>> _histories = new();
         private readonly object _lock = new();
+        private readonly Torch2WebUICfg _webConfig; 
+
+        public int MaxPerInstance => _webConfig.Logging.InstanceLogViewerMaxEntries;
 
         /// <summary>Raised on the thread that appended the entry: (instanceId, entry).</summary>
         public event Action<string, LogLine>? OnLog;
+
+
+        public InstanceLogService(Torch2WebUICfg webConfig) { _webConfig = webConfig; }
 
         public void Append(string instanceId, LogLine entry)
         {

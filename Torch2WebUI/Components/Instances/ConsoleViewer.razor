@@ -141,7 +141,7 @@
         InvokeAsync(() =>
         {
             _lines.Add(entry);
-            if (_lines.Count > InstanceLogService.MaxPerInstance)
+            if (_lines.Count > LogService.MaxPerInstance)
                 _lines.RemoveAt(0);
             _pendingScroll = true;
             StateHasChanged();

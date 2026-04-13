@@ -18,14 +18,6 @@ namespace Torch2WebUI.Configs
             [YamlMember(Description = "Log file directory path")]
             public string LogDirectory { get; set; } = "Logs";
 
-            [EnvVar("TORCH2_LOG_MAX_SIZE_MB")]
-            [YamlMember(Description = "Maximum log file size in MB before rotation")]
-            public int MaxLogFileSizeMB { get; set; } = 10;
-
-            [EnvVar("TORCH2_LOG_MAX_FILES")]
-            [YamlMember(Description = "Maximum number of log files to keep")]
-            public int MaxLogFiles { get; set; } = 7;
-
             [EnvVar("TORCH2_LOG_MAX_AGE_DAYS")]
             [YamlMember(Description = "Maximum age of log files in days before deletion")]
             public int MaxLogAgeDays { get; set; } = 30;
@@ -34,13 +26,19 @@ namespace Torch2WebUI.Configs
             [YamlMember(Description = "Log level (Trace, Debug, Information, Warning, Error, Critical)")]
             public string LogLevel { get; set; } = "Information";
 
-            [EnvVar("TORCH2_LOG_INCLUDE_TIMESTAMPS")]
-            [YamlMember(Description = "Include timestamps in log files")]
-            public bool IncludeTimestamps { get; set; } = true;
-
             [EnvVar("TORCH2_LOG_INSTANCES_CONSOLE")]
             [YamlMember(Description = "Log instances logs to console")]
             public bool EnableInstanceLogging { get; set; } = true;
+
+            [EnvVar("TORCH2_LOG_INSTANCES_MAX_ENTRIES")]
+            [YamlMember(Description = "Maximum number of log entries to keep for each instance in memory")]
+            public int InstanceLogViewerMaxEntries { get; set; } = 2000;
+
+
+            [EnvVar("TORCH2_LOG_CHAT_MAX_ENTRIES")]
+            [YamlMember(Description = "Maximum number of chat entries to keep for each instance in memory")]
+            public int InstanceChatViewerMaxEntries { get; set; } = 1000;
+
         }
 
         #endregion
@@ -53,10 +51,6 @@ namespace Torch2WebUI.Configs
         [EnvVar("TORCH2_WEB_PORT")]
         [YamlMember(Description = "Web UI Port")]
         public int Port { get; set; } = 7076;
-
-        [EnvVar("TORCH2_MAX_CONNECTIONS")]
-        [YamlMember(Description = "Maximum concurrent connections")]
-        public int MaxConnections { get; set; } = 100;
 
         [YamlMember(Description = "Logging Configuration")]
         public LoggingConfig Logging { get; set; } = new LoggingConfig();

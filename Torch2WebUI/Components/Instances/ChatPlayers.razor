@@ -153,7 +153,7 @@
             if (!_selectedChannels.Contains(message.Channel))
                 _selectedChannels.Add(message.Channel);
 
-            if (_messages.Count > InstanceChatService.MaxPerInstance)
+            if (_messages.Count > ChatService.MaxPerInstance)
                 _messages.RemoveAt(0);
 
             _pendingScroll = true;

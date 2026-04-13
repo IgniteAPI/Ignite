@@ -8,9 +8,10 @@ namespace Torch2WebUI
 {
     internal class Program
     {
+        //Main entry point for the Web UI application. Sets up the web host, configures services, and starts the application.
         public static async Task Main(string[] args)
         {
-            // Load configuration
+            // Load Web Yaml configuration
             Torch2WebUICfg config = Torch2WebUICfg.LoadYaml(Path.Combine(AppContext.BaseDirectory, "torch2webui.yml"));
 
             var builder = WebApplication.CreateBuilder(args);
@@ -34,12 +35,8 @@ namespace Torch2WebUI
             builder.Logging.ClearProviders();
 
             Console.WriteLine("Starting Torch2 Web UI...");
-
             var app = builder.Build();
-       
-
             app.UseWebSockets();
-
             app.Map("/ws/instance", async context =>
             {
                 if (!context.WebSockets.IsWebSocketRequest)
@@ -72,10 +69,11 @@ namespace Torch2WebUI
             app.MapStaticAssets();
             app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 
+
             Console.WriteLine("Torch2 Web UI started successfully!");
+            Console.WriteLine($"ConfigPath: {config.filePath}");
             Console.WriteLine($"Panel: {config.PanelName}");
             Console.WriteLine($"Port: {config.Port}");
-            Console.WriteLine($"Max Connections: {config.MaxConnections}");
             foreach (var url in app.Urls)
             {
                 Console.WriteLine($"URL: {url}/scalar");
