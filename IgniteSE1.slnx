@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="jenkinsfile.txt" />
+  </Folder>
   <Project Path="docker-compose.dcproj">
     <Build />
   </Project>
