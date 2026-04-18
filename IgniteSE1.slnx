@@ -1,6 +1,6 @@
 <Solution>
   <Folder Name="/Solution Items/">
-    <File Path="jenkinsfile.txt" />
+    <File Path="JenkinsFile..txt" />
   </Folder>
   <Project Path="docker-compose.dcproj">
     <Build />
