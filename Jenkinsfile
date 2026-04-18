@@ -20,7 +20,7 @@ pipeline {
             steps {
                 echo "Building ${env.APP_NAME}..."
                 // Example: sh 'mvn clean install' or 'npm run build'
-                sh 'echo "Build complete"'
+                echo 'echo "Build complete"'
             }
         }
 
@@ -28,14 +28,14 @@ pipeline {
             steps {
                 echo 'Running unit tests...'
                 // Example: sh 'mvn test'
-                sh 'echo "Tests passed"'
+                echo 'echo "Tests passed"'
             }
         }
 
         stage('Deploy') {
             steps {
                 echo 'Deploying to Staging environment...'
-                sh 'echo "Deployment successful"'
+                echo 'echo "Deployment successful"'
             }
         }
     }
