@@ -79,7 +79,7 @@ pipeline {
                 echo 'Restoring NuGet packages...'
                 // Solution-level restore handles both packages.config (IgniteSE1)
                 // and SDK-style projects (Torch2API, Torch2WebUI) via the .NET SDK
-                bat 'nuget restore'
+                bat 'nuget restore IgniteSE1.slnx'
             }
         }
 
@@ -87,7 +87,7 @@ pipeline {
             steps {
                 echo "Building ${env.APP_NAME}..."
                 // Build the entire solution using MSBuild for .NET Framework compatibility
-                bat 'msbuild /p:Configuration=Release /p:Platform="Any CPU" /t:Rebuild /m'
+                bat 'msbuild IgniteSE1.slnx /p:Configuration=Release /p:Platform="Any CPU" /t:Rebuild /m'
             }
         }
 
