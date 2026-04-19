@@ -87,7 +87,7 @@ pipeline {
             steps {
                 echo "Building ${env.APP_NAME}..."
                 // Build the entire solution, excluding the docker-compose project from Release builds
-                bat 'msbuild IgniteSE1.slnx /p:Configuration=Release /p:Platform="Any CPU" /t:Rebuild /m /p:BuildDockerCompose=false /v:minimal'
+                bat 'msbuild IgniteSE1.slnx /p:Configuration=Release /p:Platform="Any CPU" /t:Rebuild /m /p:BuildDockerCompose=false'
             }
         }
 
