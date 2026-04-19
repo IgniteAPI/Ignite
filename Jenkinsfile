@@ -92,11 +92,25 @@ pipeline {
         }
 
         stage('Test') {
-            steps {
-                echo 'Running tests...'
-                bat 'dotnet test Tests\\Torch2API.Tests\\Torch2API.Tests.csproj --configuration Release --verbosity normal'
-                bat 'dotnet test Tests\\Torch2WebUI.Tests\\Torch2WebUI.Tests.csproj --configuration Release --verbosity normal'
-                bat 'dotnet test Tests\\IgniteSE1.Tests\\IgniteSE1.Tests.csproj --configuration Release --verbosity normal'
+            parallel {
+                stage('Test Torch2API') {
+                    steps {
+                        echo 'Running Torch2API tests...'
+                        bat 'dotnet test Tests\\Torch2API.Tests\\Torch2API.Tests.csproj --configuration Release --verbosity normal'
+                    }
+                }
+                stage('Test Torch2WebUI') {
+                    steps {
+                        echo 'Running Torch2WebUI tests...'
+                        bat 'dotnet test Tests\\Torch2WebUI.Tests\\Torch2WebUI.Tests.csproj --configuration Release --verbosity normal'
+                    }
+                }
+                stage('Test IgniteSE1') {
+                    steps {
+                        echo 'Running IgniteSE1 tests...'
+                        bat 'dotnet test Tests\\IgniteSE1.Tests\\IgniteSE1.Tests.csproj --configuration Release --verbosity normal'
+                    }
+                }
             }
         }
     }
