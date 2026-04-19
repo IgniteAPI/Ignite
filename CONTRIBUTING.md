@@ -1,8 +1,8 @@
 # Contributing to Ignite
 
-Thanks for your interest in contributing to **Ignite** — the next-generation server framework and web control panel for Space Engineers.
+Thanks for contributing to **Ignite** — a next-generation server framework and web control panel for Space Engineers.
 
-This document outlines how to contribute effectively and keep the project clean, maintainable, and scalable.
+This project is focused on performance, extensibility, and long-term maintainability. Please follow the guidelines below to keep contributions consistent and high quality.
 
 ---
 
@@ -12,7 +12,7 @@ This document outlines how to contribute effectively and keep the project clean,
 2. Clone your fork:
 
    ```bash
-   git clone https://github.com/your-username/Ignite.git
+   git clone https://github.com/<your-username>/ignite.git
    ```
 3. Create a branch:
 
@@ -22,103 +22,129 @@ This document outlines how to contribute effectively and keep the project clean,
 
 ---
 
-## 🧱 Project Structure (High-Level)
+## 🧱 Project Overview
 
-* `IgniteSE1/` – SE1 Core server console
-* `Torch2API/` – Shared API and abstractions
+Ignite is structured into multiple components:
+
+* `IgniteSE1/` – Core server framework (runtime + orchestration)
+* `Torch2API/` – Shared contracts and abstractions
 * `Torch2WebUI/` – Web-based control panel
+* *(Planned)* Plugin system for extensibility
+
+Keep responsibilities separated. Avoid tightly coupling these layers.
 
 ---
 
-## 🛠 Development Guidelines
+## 🛠 Development Principles
 
-### Code Style
+### ✔ Keep It Modular
 
-* Use consistent formatting (IDE default or `.editorconfig`)
-* Prefer clarity over cleverness
+* Core logic should not depend on UI/web layers
+* Prefer interfaces and abstractions over concrete coupling
+
+### ✔ Favor Simplicity
+
+* Avoid over-engineering
+* Write code that’s easy to read and maintain
+
+### ✔ Extensibility First
+
+* Design features with plugins/modules in mind
+* Avoid hardcoding behavior that should be configurable
+
+---
+
+## 🧾 Code Style
+
+* Follow standard C# conventions
+* Use meaningful names (no abbreviations unless obvious)
 * Keep methods small and focused
-* Avoid unnecessary abstractions
+* Avoid deep nesting
 
-### Naming
-
-* Use clear, descriptive names
-* Avoid abbreviations unless widely understood
-* Follow standard C# naming conventions
-
-### Architecture
-
-* Favor composition over inheritance
-* Keep core logic separate from UI/web concerns
-* Design with extensibility in mind (plugins/modules)
+If formatting changes are needed, submit them separately from logic changes.
 
 ---
 
 ## 🧪 Testing
 
-* Add unit tests for new logic where applicable
-* Ensure all existing tests pass before submitting
-* Avoid breaking public APIs without discussion
+* Add tests for new functionality when practical
+* Ensure existing tests pass before submitting
+* Don’t introduce breaking changes without discussion
 
 ---
 
-## 🔄 Pull Request Process
+## 🔄 Pull Requests
 
-1. Ensure your branch is up to date with `main`
-2. Keep PRs focused and minimal
-3. Provide a clear description:
+Before submitting a PR:
 
-   * What does this change do?
-   * Why is it needed?
-4. Link related issues if applicable
+* Rebase or merge latest `main`
+* Keep changes focused and minimal
+* Write a clear description:
+
+  * What does this change do?
+  * Why is it needed?
+
+### PRs may be rejected if they:
+
+* Mix unrelated changes
+* Introduce unnecessary complexity
+* Break architecture boundaries
 
 ---
 
-## 🐛 Reporting Issues
+## 🐛 Issues & Bugs
 
-When opening an issue, include:
+When reporting issues, include:
 
-* Description of the problem
+* Clear description
 * Steps to reproduce
 * Expected vs actual behavior
-* Logs or screenshots if relevant
+* Logs/screenshots if applicable
 
 ---
 
 ## 💡 Feature Requests
 
-* Explain the use case clearly
-* Avoid vague “add X” requests
-* Be open to discussion and iteration
+* Explain the problem you’re solving
+* Avoid vague suggestions
+* Be open to discussion before implementation
 
 ---
 
-## ⚠️ What to Avoid
+## 🧩 Plugin System (Upcoming)
+
+Ignite is being designed for extensibility.
+Plugin development guidelines will be added as the system stabilizes.
+
+Until then:
+
+* Avoid building features that should be plugins into the core
+* Propose extension points instead
+
+---
+
+## ⚠️ Things to Avoid
 
 * Large, unfocused pull requests
-* Breaking changes without discussion
-* Mixing formatting changes with logic changes
-* Adding dependencies without justification
+* Breaking API changes without discussion
+* Adding dependencies without clear justification
+* Mixing refactors with feature work
 
 ---
 
-## 🧩 Plugins & Extensions (Future)
+## 🤝 Conduct
 
-Ignite is being built with extensibility in mind. Plugin guidelines will be added as the system stabilizes.
-
----
-
-## 🤝 Code of Conduct
-
-Be respectful, constructive, and collaborative. We’re building something long-term — keep it professional.
+Be respectful and constructive.
+This is a long-term project — collaboration quality matters.
 
 ---
 
 ## 🧠 Final Notes
 
-This project is evolving. Guidelines may change as the architecture matures.
+Ignite is still evolving. Some areas may change rapidly.
 
-If you're unsure about something, open a discussion before implementing.
+If you're unsure about an approach, open a discussion before implementing.
 
 ---
 
-Thanks for contributing to Ignite 🚀
+Thanks for contributing 🚀
