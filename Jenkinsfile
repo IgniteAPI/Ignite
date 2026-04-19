@@ -94,7 +94,9 @@ pipeline {
         stage('Test') {
             steps {
                 echo 'Running tests...'
-                bat 'dotnet test IgniteSE1.slnx --configuration Release --no-build --verbosity normal'
+                bat 'dotnet test Tests\\Torch2API.Tests\\Torch2API.Tests.csproj --configuration Release --verbosity normal'
+                bat 'dotnet test Tests\\Torch2WebUI.Tests\\Torch2WebUI.Tests.csproj --configuration Release --verbosity normal'
+                bat 'dotnet test Tests\\IgniteSE1.Tests\\IgniteSE1.Tests.csproj --configuration Release --verbosity normal'
             }
         }
     }

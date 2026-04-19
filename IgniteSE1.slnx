@@ -2,6 +2,11 @@
   <Folder Name="/Solution Items/">
     <File Path="Jenkinsfile" />
   </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="tests/IgniteSE1.Tests/IgniteSE1.Tests.csproj" />
+    <Project Path="tests/Torch2API.Tests/Torch2API.Tests.csproj" />
+    <Project Path="tests/Torch2WebUI.Tests/Torch2WebUI.Tests.csproj" />
+  </Folder>
   <Project Path="docker-compose.dcproj">
     <Build />
   </Project>
