@@ -76,9 +76,10 @@ pipeline {
         stage('Restore NuGet Packages') {
             steps {
                 echo 'Restoring NuGet packages...'
-                // Solution-level restore handles both packages.config (IgniteSE1)
-                // and SDK-style projects (IgniteAPI, IgniteWebUI) via the .NET SDK
+                // nuget restore for packages.config projects (IgniteSE1)
                 bat 'nuget restore IgniteSE1.slnx'
+                // dotnet restore for SDK-style projects (IgniteAPI, IgniteWebUI) to resolve project references and NuGet packages
+                bat 'dotnet restore IgniteSE1.slnx'
             }
         }
 
