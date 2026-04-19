@@ -1,15 +1,27 @@
 pipeline {
     agent any
 
+    parameters {
+        // Steam beta branch name. Leave empty for the default/stable release.
+        // Example: 'beta' for a public beta, or 'some_private_branch accesscode' for password-protected branches.
+        string(name: 'SE_BETA_BRANCH', defaultValue: '', description: 'Steam beta branch for SE Dedicated Server (leave empty for stable)')
+    }
+
     environment {
         APP_NAME = 'Ignite App'
         BUILD_VERSION = '1.0.0'
         // Space Engineers Dedicated Server Steam App ID
         SE_DS_APP_ID = '298740'
-        // Path where SteamCMD will install the dedicated server
+        // Derive a cache key from the branch so each game version gets its own cache
+        GAME_BRANCH_KEY = "${params.SE_BETA_BRANCH ? params.SE_BETA_BRANCH.split(' ')[0] : 'public'}"
+        // Persistent cache directory (survives workspace cleans)
+        CACHE_DIR = "${JENKINS_HOME}\\caches\\ignite-se"
+        // SteamCMD is shared across all branches
+        STEAMCMD_DIR = "${JENKINS_HOME}\\caches\\ignite-se\\SteamCMD"
+        // Game server cache is per-branch so stable and beta don't collide
+        GAME_CACHE_DIR = "${JENKINS_HOME}\\caches\\ignite-se\\GameServer-${GAME_BRANCH_KEY}"
+        // Path where the build expects game references
         SE_DS_PATH = "${WORKSPACE}\\IgniteSE1\\bin\\Debug\\Game"
-        // SteamCMD working directory
-        STEAMCMD_DIR = "${WORKSPACE}\\SteamCMD"
         STEAMCMD_ZIP_URL = 'https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip'
     }
 
@@ -23,25 +35,41 @@ pipeline {
 
         stage('Install SteamCMD') {
             steps {
-                echo 'Downloading and extracting SteamCMD...'
+                echo 'Checking SteamCMD cache...'
                 bat """
-                    if not exist "${env.STEAMCMD_DIR}\\steamcmd.exe" (
-                        mkdir "${env.STEAMCMD_DIR}" 2>nul
-                        powershell -Command "Invoke-WebRequest -Uri '${env.STEAMCMD_ZIP_URL}' -OutFile '%WORKSPACE%\\steamcmd.zip'"
-                        powershell -Command "Expand-Archive -Path '%WORKSPACE%\\steamcmd.zip' -DestinationPath '${env.STEAMCMD_DIR}' -Force"
-                        del "%WORKSPACE%\\steamcmd.zip"
+                    if not exist "%STEAMCMD_DIR%\\steamcmd.exe" (
+                        echo SteamCMD not found in cache, downloading...
+                        mkdir "%STEAMCMD_DIR%" 2>nul
+                        powershell -Command "Invoke-WebRequest -Uri '%STEAMCMD_ZIP_URL%' -OutFile '%CACHE_DIR%\\steamcmd.zip'"
+                        powershell -Command "Expand-Archive -Path '%CACHE_DIR%\\steamcmd.zip' -DestinationPath '%STEAMCMD_DIR%' -Force"
+                        del "%CACHE_DIR%\\steamcmd.zip"
                     ) else (
-                        echo SteamCMD already installed, skipping download.
+                        echo SteamCMD already cached, skipping download.
                     )
                 """
             }
         }
 
-        stage('Download SE Dedicated Server') {
+        stage('Update SE Dedicated Server') {
             steps {
-                echo 'Downloading Space Engineers Dedicated Server via SteamCMD...'
+                echo "Updating SE Dedicated Server cache (branch: ${env.GAME_BRANCH_KEY})..."
+                script {
+                    // Build the -beta argument only if a branch was specified
+                    def betaArg = params.SE_BETA_BRANCH?.trim() ? "-beta ${params.SE_BETA_BRANCH}" : ''
+                    bat """
+                        cmd /c ""%STEAMCMD_DIR%\\steamcmd.exe" +@ShutdownOnFailedCommand 1 +@NoPromptForPassword 1 +force_install_dir "%GAME_CACHE_DIR%" +login anonymous +app_update %SE_DS_APP_ID% ${betaArg} +quit"
+                    """
+                }
+            }
+        }
+
+        stage('Link Game References') {
+            steps {
+                echo 'Copying cached game files to build directory...'
                 bat """
-                    "${env.STEAMCMD_DIR}\\steamcmd.exe" +@ShutdownOnFailedCommand 1 +@NoPromptForPassword 1 +force_install_dir "${env.SE_DS_PATH}" +login anonymous +app_update ${env.SE_DS_APP_ID} validate +quit
+                    if not exist "%SE_DS_PATH%" mkdir "%SE_DS_PATH%"
+                    robocopy "%GAME_CACHE_DIR%" "%SE_DS_PATH%" /MIR /NFL /NDL /NJH /NJS /nc /ns /np
+                    if %ERRORLEVEL% LEQ 7 exit /b 0
                 """
             }
         }
