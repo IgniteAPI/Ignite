@@ -1,0 +1,64 @@
+@using IgniteWebUI.Models.Contexts
+<MudNavMenu>
+
+    <MudNavLink Href="/"
+                Match="NavLinkMatch.All"
+                Icon="@Icons.Material.Filled.ArrowBack">
+        Back to Main Panel
+    </MudNavLink>
+
+    <MudDivider Class="my-3" />
+
+    <!-- Instance Tools -->
+    <MudNavLink Href="@($"/instances/{Context.InstanceId}")"
+                Match="NavLinkMatch.All"
+                Icon="@Icons.Material.Filled.Dashboard">
+        Overview
+    </MudNavLink>
+
+    <MudNavLink Href="@($"/instances/{Context.InstanceId}/consoleviewer")"
+                Icon="@Icons.Material.Filled.Terminal">
+        Console Viewer
+    </MudNavLink>
+
+    <MudNavGroup Title="Configuration"
+                 Icon="@Icons.Material.Filled.SettingsApplications"
+                 Expanded="false">
+
+        <MudNavLink Href="@($"/instances/{Context.InstanceId}/worlds")"
+                    Icon="@Icons.Material.Filled.DataSaverOn">
+            Worlds
+        </MudNavLink>
+
+        <MudNavLink Href="@($"/instances/{Context.InstanceId}/profiles")"
+                    Icon="@Icons.Material.Filled.SettingsApplications">
+            Profiles
+        </MudNavLink>
+
+    </MudNavGroup>
+
+
+
+
+
+    <MudNavLink Href="@($"/instances/{Context.InstanceId}/chat")"
+                Icon="@Icons.Material.Filled.Chat">
+        Chat / Players
+    </MudNavLink>
+
+    <MudNavLink Href="entities"
+                Icon="@Icons.Material.Filled.Hub">
+        Entity Manager
+    </MudNavLink>
+
+    <MudNavLink Href="plugins"
+                Icon="@Icons.Material.Filled.Power">
+        Plugins
+    </MudNavLink>
+
+</MudNavMenu>
+
+@code {
+    [CascadingParameter]
+    public InstanceContext Context { get; set; } = default!;
+}

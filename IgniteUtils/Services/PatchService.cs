@@ -1,4 +1,4 @@
-﻿using HarmonyLib;
+using HarmonyLib;
 using InstanceUtils.Services;
 using System;
 using System.Collections.Generic;

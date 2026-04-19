@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Torch2API.DTOs.Logs;
+using IgniteAPI.DTOs.Logs;
 
 namespace InstanceUtils.Logging
 {

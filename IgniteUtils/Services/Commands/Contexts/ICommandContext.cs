@@ -1,10 +1,10 @@
-﻿using InstanceUtils.Services.Commands;
+using InstanceUtils.Services.Commands;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Torch2API.Models.Commands;
+using IgniteAPI.Models.Commands;
 
-namespace Torch2API.Models.Commands
+namespace IgniteAPI.Models.Commands
 {
     public interface ICommandContext
     {

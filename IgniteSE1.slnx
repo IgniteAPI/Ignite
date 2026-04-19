@@ -3,15 +3,23 @@
     <File Path="Jenkinsfile" />
   </Folder>
   <Folder Name="/Tests/">
-    <Project Path="tests/IgniteSE1.Tests/IgniteSE1.Tests.csproj" />
-    <Project Path="tests/Torch2API.Tests/Torch2API.Tests.csproj" />
-    <Project Path="tests/Torch2WebUI.Tests/Torch2WebUI.Tests.csproj" />
+    <Project Path="tests/IgniteAPI.Tests/IgniteAPI.Tests.csproj">
+      <Build Solution="Debug|*" Project="false" />
+    </Project>
+    <Project Path="tests/IgniteSE1.Tests/IgniteSE1.Tests.csproj">
+      <Build Solution="Debug|*" Project="false" />
+    </Project>
+    <Project Path="tests/IgniteWebUI.Tests/IgniteWebUI.Tests.csproj">
+      <Build Solution="Debug|*" Project="false" />
+    </Project>
   </Folder>
-  <Project Path="docker-compose.dcproj">
+  <Project Path="Docker/docker-compose.dcproj">
     <Build />
   </Project>
-  <Project Path="IgniteSE1/IgniteSE1.csproj" Id="18569b32-136d-4a7e-a3f3-63d84f90ad11" />
+  <Project Path="IgniteAPI/IgniteAPI.csproj" Id="69a879f4-f46f-4b13-ae1d-410a2ee199ce" />
+  <Project Path="IgniteSE1/IgniteSE1.csproj" Id="18569b32-136d-4a7e-a3f3-63d84f90ad11">
+    <Platform Solution="Debug|*" Project="x64" />
+  </Project>
   <Project Path="IgniteUtils/InstanceUtils.shproj" Id="834c8593-3128-43ff-b7c8-c26ebb8aa1d3" />
-  <Project Path="Torch2API/Torch2API.csproj" Id="69a879f4-f46f-4b13-ae1d-410a2ee199ce" />
-  <Project Path="Torch2WebUI/Torch2WebUI.csproj" Id="5eda7124-a8b3-4534-a65f-03fc10bd4f8d" />
+  <Project Path="IgniteWebUI/IgniteWebUI.csproj" Id="5eda7124-a8b3-4534-a65f-03fc10bd4f8d" />
 </Solution>

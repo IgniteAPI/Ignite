@@ -1,4 +1,4 @@
-﻿using HarmonyLib;
+using HarmonyLib;
 using IgniteSE1.Configs;
 using InstanceUtils.Logging;
 using InstanceUtils.Services;
@@ -16,8 +16,8 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Torch2API.Models.Configs;
-using Torch2API.Models.Schema;
+using IgniteAPI.Models.Configs;
+using IgniteAPI.Models.Schema;
 using VRage.FileSystem;
 using VRage.Game;
 using VRage.Game.ModAPI;

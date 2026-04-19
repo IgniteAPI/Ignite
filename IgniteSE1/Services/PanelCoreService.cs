@@ -1,4 +1,4 @@
-﻿using IgniteSE1.Configs;
+using IgniteSE1.Configs;
 using IgniteSE1.Services;
 using InstanceUtils.Models.Server;
 using InstanceUtils.Services.Commands.Contexts;
@@ -14,11 +14,11 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Torch2API.Constants;
-using Torch2API.DTOs.Chat;
-using Torch2API.DTOs.Instances;
-using Torch2API.DTOs.WebSockets;
-using Torch2API.Models.Configs;
+using IgniteAPI.Constants;
+using IgniteAPI.DTOs.Chat;
+using IgniteAPI.DTOs.Instances;
+using IgniteAPI.DTOs.WebSockets;
+using IgniteAPI.Models.Configs;
 
 namespace InstanceUtils.Services.WebPanel
 {

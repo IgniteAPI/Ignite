@@ -1,10 +1,10 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Text.Json;
-using Torch2API.Constants;
-using Torch2API.DTOs.WebSockets;
-using Torch2API.Models.Commands;
+using IgniteAPI.Constants;
+using IgniteAPI.DTOs.WebSockets;
+using IgniteAPI.Models.Commands;
 
 namespace InstanceUtils.Services.Commands.Contexts
 {

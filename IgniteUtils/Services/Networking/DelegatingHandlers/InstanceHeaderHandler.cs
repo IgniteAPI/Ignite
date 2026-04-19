@@ -1,4 +1,4 @@
-﻿using InstanceUtils.Models.Server;
+using InstanceUtils.Models.Server;
 using InstanceUtils.Utils.Identification;
 using System;
 using System.Collections.Generic;
@@ -6,7 +6,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Torch2API.Constants;
+using IgniteAPI.Constants;
 using static VRage.Dedicated.Configurator.SelectInstanceForm;
 
 namespace InstanceUtils.Services.Networking

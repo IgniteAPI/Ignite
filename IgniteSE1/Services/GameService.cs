@@ -1,4 +1,4 @@
-﻿using EmptyKeys.UserInterface.Generated.StoreBlockView_Bindings;
+using EmptyKeys.UserInterface.Generated.StoreBlockView_Bindings;
 using HarmonyLib;
 using IgniteSE1.Configs;
 using InstanceUtils.Models;
@@ -26,7 +26,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-using Torch2API.Models.Configs;
+using IgniteAPI.Models.Configs;
 using VRage;
 using VRage.Dedicated;
 using VRage.FileSystem;

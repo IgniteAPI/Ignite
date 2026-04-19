@@ -1,4 +1,4 @@
-﻿using IgniteSE1.Services;
+using IgniteSE1.Services;
 using IgniteSE1.Utilities.ModelTransfers;
 using InstanceUtils.Services;
 using InstanceUtils.Services.Commands.Contexts;
@@ -8,14 +8,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Torch2API.Attributes;
-using Torch2API.Constants;
-using Torch2API.Models.Commands;
-using Torch2API.Models.Configs;
+using IgniteAPI.Attributes;
+using IgniteAPI.Constants;
+using IgniteAPI.Models.Commands;
+using IgniteAPI.Models.Configs;
 using System.Reflection;
 using System.Text.Json;
 using System.IO;
-using Torch2API.Models.SE1;
+using IgniteAPI.Models.SE1;
 
 namespace IgniteSE1.Commands
 {

@@ -78,7 +78,7 @@ pipeline {
             steps {
                 echo 'Restoring NuGet packages...'
                 // Solution-level restore handles both packages.config (IgniteSE1)
-                // and SDK-style projects (Torch2API, Torch2WebUI) via the .NET SDK
+                // and SDK-style projects (IgniteAPI, IgniteWebUI) via the .NET SDK
                 bat 'nuget restore IgniteSE1.slnx'
             }
         }
@@ -93,19 +93,19 @@ pipeline {
 
         stage('Project Tests') {
             parallel {
-                stage('Test Torch2API') {
+                stage('Test Ignite API') {
                     steps {
-                        echo 'Running Torch2API tests...'
-                        bat 'dotnet test Tests\\Torch2API.Tests\\Torch2API.Tests.csproj --configuration Release --verbosity minimal'
+                        echo 'Running IgniteAPI tests...'
+                        bat 'dotnet test Tests\\IgniteAPI.Tests\\IgniteAPI.Tests.csproj --configuration Release --verbosity minimal'
                     }
                 }
-                stage('Test Torch2WebUI') {
+                stage('Test Ignite WebUI') {
                     steps {
-                        echo 'Running Torch2WebUI tests...'
-                        bat 'dotnet test Tests\\Torch2WebUI.Tests\\Torch2WebUI.Tests.csproj --configuration Release --verbosity minimal'
+                        echo 'Running IgniteWebUI tests...'
+                        bat 'dotnet test Tests\\IgniteWebUI.Tests\\IgniteWebUI.Tests.csproj --configuration Release --verbosity minimal'
                     }
                 }
-                stage('Test IgniteSE1') {
+                stage('Test IgniteSE1 Console') {
                     steps {
                         echo 'Running IgniteSE1 tests...'
                         bat 'dotnet test Tests\\IgniteSE1.Tests\\IgniteSE1.Tests.csproj --configuration Release --verbosity minimal'

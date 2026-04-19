@@ -1,4 +1,4 @@
-﻿using InstanceUtils.Services.Commands;
+using InstanceUtils.Services.Commands;
 using InstanceUtils.Services.Commands.Contexts;
 using Microsoft.Extensions.DependencyInjection;
 using NLog;
@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.CommandLine;
 using System.Linq;
 using System.Text;
-using Torch2API.Models.Commands;
+using IgniteAPI.Models.Commands;
 using static SpaceEngineers.Game.VoiceChat.OpusDevice;
 
 namespace InstanceUtils.Services.Commands

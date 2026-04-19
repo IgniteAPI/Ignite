@@ -1,0 +1,16 @@
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace IgniteAPI.DTOs.WebSockets
+{
+    public enum WebSocketMsgType
+    {
+        Unknown = 0,
+        ServerStatus = 1,
+        ServerStatusUpdate = 2,
+        PlayerJoined = 3,
+        PlayerLeft = 4,
+        ChatMessage = 5
+    }
+}

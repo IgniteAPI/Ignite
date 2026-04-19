@@ -1,8 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
-using Torch2API.Attributes;
-using Torch2API.Models.Commands;
+using IgniteAPI.Attributes;
+using IgniteAPI.Models.Commands;
 
 namespace InstanceUtils.Commands.StateCommands
 {

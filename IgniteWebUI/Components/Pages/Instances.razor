@@ -1,0 +1,279 @@
+@page "/Instances"
+@using IgniteAPI.DTOs.Instances
+@using IgniteAPI.Models
+@using IgniteWebUI.Services
+@using IgniteWebUI.Services.InstanceServices
+@inject NavigationManager Navigation
+
+@inject InstanceManager InstanceManager
+@inject InstanceCommandService CommandService
+
+<PageTitle>Instance Dashboard</PageTitle>
+
+<MudText Typo="Typo.h3" GutterBottom="true">Instance Dashboard</MudText>
+
+@* ===================== PENDING ===================== *@
+<MudStack Row="true"
+          AlignItems="AlignItems.Center"
+          Spacing="2"
+          Class="mt-4 mb-2">
+
+    <MudText Typo="Typo.h5">
+        Adoptable Instances
+    </MudText>
+
+    <MudSpacer />
+
+    <MudSwitch @bind-Value="InstanceManager.EnableServerDiscovery"
+               Color="Color.Primary"
+               Label="Allow Adoption" />
+</MudStack>
+@if (!InstanceManager.GetPendingInstances().Any())
+{
+    <MudAlert Severity="Severity.Info" Dense="true">
+        No adoptable instances.
+    </MudAlert>
+}
+else
+{
+    <MudGrid Spacing="6">
+        @foreach (var instance in InstanceManager.GetPendingInstances())
+        {
+            <MudItem xs="12" sm="8" md="6" lg="3">
+                <MudCard Elevation="2">
+
+
+                    <MudCardContent>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            <MudText Typo="Typo.h6">
+                                @instance.Name
+                            </MudText>
+
+                            <MudChip T="string"
+                                     Size="Size.Small"
+                                     Color="@GetStatusColor(instance.ServerStatus)"
+                                     Variant="Variant.Filled">
+                                @instance.ServerStatus
+                            </MudChip>
+
+                            <MudSpacer />
+
+                            <MudTooltip Text="@instance.InstanceID" Placement="Placement.Bottom">
+                                <MudIcon Icon="@Icons.Material.Filled.Fingerprint"
+                                         Size="Size.Small"
+                                         Color="Color.Secondary" />
+                            </MudTooltip>
+                        </MudStack>
+
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            <MudText Typo="Typo.caption">
+                                [<strong>Profile:</strong> @instance.ProfileName]
+                            </MudText>
+
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                [<strong>World:</strong> @instance.TargetWorld]
+                            </MudText>
+
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                [<strong>UpTime:</strong> @instance.GetFormattedGameUptime()]
+                            </MudText>
+                        </MudStack>
+
+                        <MudDivider Class="my-2" />
+
+                        <MudText Typo="Typo.body2">
+                            <strong>Host:</strong> @instance.MachineName
+                        </MudText>
+
+                        <MudText Typo="Typo.body2">
+                            <strong>Address:</strong> @instance.IPAddress:@instance.GamePort
+                        </MudText>
+
+
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            Torch Version @instance.TorchVersion
+                        </MudText>
+
+                    </MudCardContent>
+
+                    <MudCardActions>
+                        <MudButton Size="Size.Small"
+                                   Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   OnClick="@(async () => await Adopt(instance))">
+                            Adopt
+                        </MudButton>
+
+                        <MudButton Size="Size.Small"
+                                   Variant="Variant.Text"
+                                   Color="Color.Primary"
+                                   OnClick="@(() => NavigateToInstance(instance.GetShortId()))">
+                            View
+                        </MudButton>
+                    </MudCardActions>
+
+                </MudCard>
+            </MudItem>
+        }
+    </MudGrid>
+}
+
+@* ===================== ACTIVE ===================== *@
+<MudText Typo="Typo.h5" Class="mt-6 mb-2">
+    Configured Instances
+</MudText>
+
+@if (!InstanceManager.ActiveInstances.Any())
+{
+    <MudAlert Severity="Severity.Info" Dense="true">
+        No active instances.
+    </MudAlert>
+}
+else
+{
+    <MudGrid Spacing="3">
+        @foreach (var instance in InstanceManager.ActiveInstances.Values)
+        {
+            if (!instance.Configured)
+                continue;
+
+            <MudItem xs="12" sm="6" md="4" lg="3">
+                <MudCard Elevation="2">
+
+                    <MudCardContent>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            <MudText Typo="Typo.h6">
+                                @instance.Name
+                            </MudText>
+
+                            <MudChip T="string"
+                                     Size="Size.Small"
+                                     Color="@GetStatusColor(instance.ServerStatus)"
+                                     Variant="Variant.Filled">
+                                @instance.ServerStatus
+                            </MudChip>
+
+                            <MudSpacer />
+
+                            <MudTooltip Text="@instance.InstanceID" Placement="Placement.Bottom">
+                                <MudIcon Icon="@Icons.Material.Filled.Fingerprint"
+                                         Size="Size.Small"
+                                         Color="Color.Secondary" />
+                            </MudTooltip>
+                        </MudStack>
+
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            <MudText Typo="Typo.caption">
+                                [<strong>Profile:</strong> @instance.ProfileName]
+                            </MudText>
+
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                [<strong>World:</strong> @instance.TargetWorld]
+                            </MudText>
+
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                [<strong>UpTime:</strong> @instance.GetFormattedGameUptime()]
+                            </MudText>
+                        </MudStack>
+
+                        <MudDivider Class="my-2" />
+
+                        <MudText Typo="Typo.body2">
+                            <strong>Host:</strong> @instance.MachineName
+                        </MudText>
+
+                        <MudText Typo="Typo.body2">
+                            <strong>Address:</strong> @instance.IPAddress:@instance.GamePort
+                        </MudText>
+
+
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            Torch Version @instance.TorchVersion
+                        </MudText>
+
+                    </MudCardContent>
+
+                    <MudCardActions>
+                        <MudButton Size="Size.Small"
+                                   Variant="Variant.Text"
+                                   Color="Color.Primary"
+                                   OnClick="@(() => NavigateToInstance(instance.GetShortId()))">
+                            View
+                        </MudButton>
+
+                        <MudButton Size="Size.Small"
+                                   Variant="Variant.Text"
+                                   OnClick="@(() => CommandService.SendCommand(instance, "Config/Profiles/List"))"
+                                   Color="Color.Warning">
+                            GetInstances
+                        </MudButton>
+
+
+                        @if (instance.ServerStatus == ServerStatusEnum.Idle)
+                        {
+                            <MudButton Size="Size.Small"
+                                       Variant="Variant.Text"
+                                       OnClick="@(() => CommandService.SendCommand(instance, "Server/Start"))"
+                                       Color="Color.Warning">
+                                Start
+                            </MudButton>
+                        }
+
+                        @if (instance.ServerStatus == ServerStatusEnum.Running)
+                        {
+                            <MudButton Size="Size.Small"
+                                       Variant="Variant.Text"
+                                       OnClick="@(() => CommandService.SendCommand(instance, "Server/Stop"))"
+                                       Color="Color.Warning">
+                                Stop
+                            </MudButton>
+                        }
+
+                    </MudCardActions>
+
+                </MudCard>
+            </MudItem>
+        }
+    </MudGrid>
+}
+
+@code {
+
+    private Action<string>? _onChangeHandler;
+
+    private async Task Adopt(TorchInstanceBase instance)
+    {
+        await InstanceManager.AdoptInstance(instance.InstanceID);
+    }
+
+    Color GetStatusColor(ServerStatusEnum status) => status switch
+    {
+        ServerStatusEnum.Initializing => Color.Info,      // booting up
+        ServerStatusEnum.Idle => Color.Secondary, // waiting / standby
+        ServerStatusEnum.Starting => Color.Warning,   // transition
+        ServerStatusEnum.Running => Color.Success,   // healthy
+        ServerStatusEnum.Stopping => Color.Warning,   // transition
+        ServerStatusEnum.Stopped => Color.Default,   // off
+        ServerStatusEnum.Error => Color.Error,     // bad
+        _ => Color.Default
+    };
+
+    protected override void OnInitialized()
+    {
+        _onChangeHandler = (s) => InvokeAsync(StateHasChanged);
+        InstanceManager.OnChange += _onChangeHandler;
+    }
+
+    public void Dispose()
+    {
+        if (_onChangeHandler is not null)
+            InstanceManager.OnChange -= _onChangeHandler;
+
+           
+    }
+
+    private void NavigateToInstance(string instanceId)
+    {
+        Navigation.NavigateTo($"/instances/{instanceId}");
+    }
+}

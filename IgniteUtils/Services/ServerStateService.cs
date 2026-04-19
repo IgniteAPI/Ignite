@@ -1,4 +1,4 @@
-﻿using InstanceUtils.Commands;
+using InstanceUtils.Commands;
 using InstanceUtils.Commands.TestCommand;
 using InstanceUtils.Logging;
 using InstanceUtils.Models;
@@ -12,8 +12,8 @@ using System.CommandLine;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Torch2API.Models;
-using Torch2API.Utils;
+using IgniteAPI.Models;
+using IgniteAPI.Utils;
 using VRage;
 
 namespace InstanceUtils.Services

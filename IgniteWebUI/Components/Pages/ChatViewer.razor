@@ -1,0 +1,207 @@
+@page "/GameChat"
+@using IgniteAPI.DTOs.Chat
+@using IgniteWebUI.Services.InstanceServices
+@inject InstanceChatService ChatService
+@inject IJSRuntime JS
+@implements IDisposable
+
+<PageTitle>Global Chat Viewer</PageTitle>
+
+<MudStack Spacing="3" Style="height:calc(100dvh - 120px);">
+
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+        <MudText Typo="Typo.h5">Global Chat Viewer</MudText>
+        <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Outlined">
+            @FilteredMessages.Count messages
+        </MudChip>
+        @if (_messages.Count == 0)
+        {
+            <MudText Typo="Typo.caption" Color="Color.Warning">No chat messages received yet</MudText>
+        }
+        <MudSpacer />
+        <MudIconButton Icon="@(_autoScroll ? Icons.Material.Filled.Lock : Icons.Material.Filled.LockOpen)"
+                       Color="@(_autoScroll ? Color.Primary : Color.Default)"
+                       OnClick="@(() => _autoScroll = !_autoScroll)"
+                       Title="@(_autoScroll ? "Auto-scroll on" : "Auto-scroll off")"
+                       Size="Size.Small" />
+        <MudIconButton Icon="@Icons.Material.Filled.DeleteSweep"
+                       Color="Color.Error"
+                       OnClick="ClearChat"
+                       Title="Clear chat"
+                       Size="Size.Small" />
+    </MudStack>
+
+    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+        @foreach (var (channel, color) in _channels)
+        {
+            bool active = _selectedChannels.Contains(channel);
+            <MudButton Color="@(active ? color : Color.Default)"
+                       Variant="@(active ? Variant.Filled : Variant.Outlined)"
+                       Size="Size.Small"
+                       Style="@(active ? "" : "opacity:0.38;")"
+                       OnClick="@(() => ToggleChannel(channel))">
+                @channel
+            </MudButton>
+        }
+    </MudStack>
+
+    <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+        <MudText Typo="Typo.body2">Filter by Instance:</MudText>
+        <MudSelect T="string" Value="@_selectedInstance" ValueChanged="@((string value) => OnInstanceFilterChanged(value))"
+                   Variant="Variant.Outlined" Size="Size.Small" Style="min-width:250px;">
+            <MudSelectItem Value="@string.Empty">All Instances</MudSelectItem>
+            @foreach (var instance in _instanceNames.OrderBy(x => x))
+            {
+                <MudSelectItem Value="@instance">@instance</MudSelectItem>
+            }
+        </MudSelect>
+    </MudStack>
+
+    <MudPaper Elevation="2" Style="flex:1; min-height:0; display:flex; flex-direction:column; overflow:hidden;">
+
+        <div style="display:grid; grid-template-columns:90px 100px 80px 160px 1fr;
+                    padding:6px 12px; font-weight:600; font-size:12px;
+                    border-bottom:1px solid rgba(128,128,128,0.25);
+                    flex-shrink:0;">
+            <span>Time</span>
+            <span>Instance</span>
+            <span>Channel</span>
+            <span>Player</span>
+            <span>Message</span>
+        </div>
+
+        <div style="overflow-y:auto; flex:1; font-family:monospace; font-size:12px;"
+             id="chat-scroll">
+            @foreach (var msg in FilteredMessages)
+            {
+                <div style="display:grid; grid-template-columns:90px 100px 80px 160px 1fr;
+                            padding:2px 12px;
+                            border-bottom:1px solid rgba(128,128,128,0.06);">
+                    <span style="color:var(--mud-palette-text-secondary); white-space:nowrap;">
+                        @msg.Timestamp.ToLocalTime().ToString("HH:mm:ss")
+                    </span>
+                    <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+                                 color:var(--mud-palette-text-secondary);"
+                          title="@msg.InstanceName">
+                        @(msg.InstanceName ?? "N/A")
+                    </span>
+                    <span style="@ChannelStyle(msg.Channel); font-weight:600; white-space:nowrap;">
+                        @msg.Channel
+                    </span>
+                    <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"
+                          title="@msg.SteamId">
+                        @msg.DisplayName@if (!string.IsNullOrEmpty(msg.Target))
+                        {<span style="color:var(--mud-palette-text-secondary);"> → @msg.Target</span>}
+                    </span>
+                    <span style="white-space:pre-wrap; word-break:break-all;">
+                        @msg.Message
+                    </span>
+                </div>
+            }
+            <div id="chat-bottom"></div>
+        </div>
+
+    </MudPaper>
+
+</MudStack>
+
+@code {
+    private List<ChatMessage> _messages = new();
+    private HashSet<string> _instanceNames = new();
+    private string _selectedInstance = string.Empty;
+
+    private static readonly (string Channel, Color Color)[] _channels =
+    [
+        ("Global", Color.Success),
+        ("GlobalScripted", Color.Info),
+        ("Faction", Color.Warning),
+        ("Private", Color.Error),
+        ("ChatBot", Color.Secondary),
+        ("BroadcastController", Color.Primary),
+    ];
+
+    private readonly HashSet<string> _selectedChannels =
+        new(StringComparer.OrdinalIgnoreCase) { "Global", "GlobalScripted", "Faction", "Private", "ChatBot", "BroadcastController" };
+
+    private void ToggleChannel(string channel)
+    {
+        if (!_selectedChannels.Remove(channel))
+            _selectedChannels.Add(channel);
+    }
+
+    private bool _autoScroll = true;
+    private bool _pendingScroll;
+
+    private List<ChatMessage> FilteredMessages =>
+        _selectedChannels.Count == 0
+            ? new List<ChatMessage>()
+            : _messages
+                .Where(m => _selectedChannels.Contains(m.Channel))
+                .Where(m => string.IsNullOrEmpty(_selectedInstance) || m.InstanceName == _selectedInstance)
+                .ToList();
+
+    protected override void OnInitialized()
+    {
+        _messages = new List<ChatMessage>(ChatService.GetAllHistory());
+        _instanceNames = new HashSet<string>(_messages
+            .Where(m => !string.IsNullOrEmpty(m.InstanceName))
+            .Select(m => m.InstanceName!)
+            .Distinct(StringComparer.OrdinalIgnoreCase));
+        _pendingScroll = true;
+        ChatService.OnChat += HandleChat;
+        StateHasChanged();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_pendingScroll && _autoScroll)
+        {
+            _pendingScroll = false;
+            await JS.InvokeVoidAsync("scrollElementIntoView", "chat-bottom");
+        }
+    }
+
+    private void HandleChat(string instanceId, ChatMessage message)
+    {
+        InvokeAsync(() =>
+        {
+            _messages.Add(message);
+            if (_messages.Count > ChatService.MaxPerInstance)
+                _messages.RemoveAt(0);
+
+            if (!string.IsNullOrEmpty(message.InstanceName) && !_instanceNames.Contains(message.InstanceName))
+            {
+                _instanceNames.Add(message.InstanceName);
+            }
+
+            _pendingScroll = true;
+            StateHasChanged();
+        });
+    }
+
+    private void OnInstanceFilterChanged(string instance)
+    {
+        _selectedInstance = instance;
+        _pendingScroll = true;
+        StateHasChanged();
+    }
+
+    private void ClearChat()
+    {
+        _messages.Clear();
+        StateHasChanged();
+    }
+
+    private static string ChannelStyle(string channel) => channel.ToUpperInvariant() switch
+    {
+        "GLOBAL" => "color:var(--mud-palette-success)",
+        "GLOBALSCRIPTED" => "color:var(--mud-palette-info)",
+        "FACTION" => "color:var(--mud-palette-warning)",
+        "PRIVATE" => "color:var(--mud-palette-error)",
+        "CHATBOT" => "color:var(--mud-palette-secondary)",
+        "BROADCASTCONTROLLER" => "color:var(--mud-palette-primary)",
+        _ => ""
+    };
+
+    public void Dispose() => ChatService.OnChat -= HandleChat;
+}

@@ -1,6 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using Torch2API.Models.SE1;
+using IgniteAPI.Models.SE1;
 using VRage.Game.ModAPI;
 
 namespace IgniteSE1.Utilities.ModelTransfers
@@ -49,7 +49,7 @@ namespace IgniteSE1.Utilities.ModelTransfers
 
         /// <summary>
         /// Copies values from the DTO/model into the runtime IMyConfigDedicated instance.
-        /// This does not persist/save the config to disk — caller should handle saving/restarting if required.
+        /// This does not persist/save the config to disk � caller should handle saving/restarting if required.
         /// </summary>
         public static void SetDedicatedConfig(IMyConfigDedicated dedicated, ConfigDedicatedSE1 model)
         {

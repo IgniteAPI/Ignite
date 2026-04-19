@@ -1,4 +1,4 @@
-﻿using IgniteSE1.Services;
+using IgniteSE1.Services;
 using InstanceUtils.Commands;
 using InstanceUtils.Commands.StateCommands;
 using InstanceUtils.Services;
@@ -7,8 +7,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Torch2API.Models;
-using Torch2API.Models.Commands;
+using IgniteAPI.Models;
+using IgniteAPI.Models.Commands;
 
 namespace IgniteSE1.Commands
 {

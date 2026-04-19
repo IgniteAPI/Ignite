@@ -1,0 +1,102 @@
+@using IgniteWebUI.Services
+@using IgniteWebUI.Services.InstanceServices
+@inject InstanceManager InstanceManager
+
+<MudNavMenu>
+    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
+
+    <MudNavLink Href="Logs" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Terminal">Logs</MudNavLink>
+
+    <MudNavLink Href="GameChat" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Chat">Game Chat</MudNavLink>
+
+    <MudNavLink Href="players" Icon="@Icons.Material.Filled.Groups">Players</MudNavLink>
+
+    <MudNavLink Href="Mods" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Extension">Mod Lists</MudNavLink>
+
+    <MudNavGroup Title="Instances"
+                 Icon="@Icons.Material.Filled.ViewList"
+                 Expanded="true">
+
+        <!-- All Instances / Overview -->
+        <MudNavLink Href="/instances"
+                    Match="NavLinkMatch.Prefix"
+                    Icon="@Icons.Material.Filled.Dashboard">
+            Overview
+        </MudNavLink>
+
+        @foreach (var instance in InstanceManager.ActiveInstances)
+        {
+            <MudNavLink Href="@($"/instances/{instance.Value.GetShortId()}")"
+                        IconColor="@(instance.Value.IsOnline? Color.Success: Color.Error)"
+                        Icon="@Icons.Material.Filled.Dns">
+               
+                <MudBadge Content="3"
+                          Color="Color.Error"
+                          Origin="@(RightToLeft ? Origin.CenterLeft : Origin.CenterRight)"
+                          BadgeClass="mx-2">
+                    @instance.Value.Name
+                </MudBadge>
+
+            </MudNavLink>
+        }
+
+    </MudNavGroup>
+
+    <MudNavLink Href="Configs" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.SettingsApplications">Config Groups</MudNavLink>
+
+    <MudNavLink Href="plugins" Icon="@Icons.Material.Filled.Extension">Plugins</MudNavLink>
+
+    <MudDivider Class="mt-4" />
+
+    <MudNavGroup Title="Administration"
+                 Icon="@Icons.Material.Filled.Security"
+                 Expanded="false">
+
+        <MudNavLink Href="users" Match="NavLinkMatch.Prefix"
+                    Icon="@Icons.Material.Filled.AdminPanelSettings">
+            Users
+        </MudNavLink>
+
+        <MudNavLink Href="roles" Match="NavLinkMatch.Prefix"
+                    Icon="@Icons.Material.Filled.Rule">
+            Roles
+        </MudNavLink>
+
+        <MudNavLink Href="audit" Match="NavLinkMatch.Prefix"
+                    Icon="@Icons.Material.Filled.History">
+            Audit Log
+        </MudNavLink>
+
+        <MudNavLink Href="settings" Match="NavLinkMatch.Prefix"
+                    Icon="@Icons.Material.Filled.Settings">
+            Settings
+        </MudNavLink>
+
+    </MudNavGroup>
+
+
+</MudNavMenu>
+
+@code {
+    [CascadingParameter(Name = "RightToLeft")] public bool RightToLeft { get; set; }
+
+    private Action<string>? _onChangeHandler;
+
+    protected override void OnInitialized()
+    {
+        _onChangeHandler = (s) => InvokeAsync(StateHasChanged);
+        InstanceManager.OnChange += _onChangeHandler;
+        base.OnInitialized();
+    }
+
+    public void Dispose()
+    {
+        if (_onChangeHandler is not null)
+            InstanceManager.OnChange -= _onChangeHandler;
+
+
+    }
+
+}
+
+

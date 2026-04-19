@@ -1,4 +1,4 @@
-﻿using InstanceUtils.Logging;
+using InstanceUtils.Logging;
 using InstanceUtils.Services;
 using Microsoft.Extensions.Hosting;
 using NLog;
@@ -11,7 +11,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using Torch2API.Models;
+using IgniteAPI.Models;
 
 namespace IgniteSE1.Services
 {
@@ -140,7 +140,7 @@ namespace IgniteSE1.Services
 
                 if (completed != initTask)
                 {
-                    LogAndDisplay(LogLevel.Fatal, $"[red]⏱ Timeout:[/] {type} ({completedCount}/{total})");
+                    LogAndDisplay(LogLevel.Fatal, $"[red]? Timeout:[/] {type} ({completedCount}/{total})");
                     allSucceeded = false;
                     continue;
                 }
@@ -148,7 +148,7 @@ namespace IgniteSE1.Services
                 bool result = await initTask;
                 if (!result)
                 {
-                    LogAndDisplay(LogLevel.Fatal, $"[red]✖ Failed:[/] {type} ({completedCount}/{total})");
+                    LogAndDisplay(LogLevel.Fatal, $"[red]? Failed:[/] {type} ({completedCount}/{total})");
                     allSucceeded = false;
                 }
                 else
@@ -209,11 +209,11 @@ namespace IgniteSE1.Services
 
                 if (result)
                 {
-                    LogAndDisplay(LogLevel.Info, $"[green]✔ {phaseName}:[/] {type} ({completedCount}/{total})");
+                    LogAndDisplay(LogLevel.Info, $"[green]? {phaseName}:[/] {type} ({completedCount}/{total})");
                 }
                 else
                 {
-                    LogAndDisplay(LogLevel.Error, $"[red]✖ Failed to {phaseName.ToLower()}:[/] {type} ({completedCount}/{total})");
+                    LogAndDisplay(LogLevel.Error, $"[red]? Failed to {phaseName.ToLower()}:[/] {type} ({completedCount}/{total})");
                     allSucceeded = false;
                 }
 

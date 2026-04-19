@@ -1,4 +1,4 @@
-﻿using Google.Protobuf.WellKnownTypes;
+using Google.Protobuf.WellKnownTypes;
 using InstanceUtils.Services.Commands.Contexts;
 using InstanceUtils.Services.Networking;
 using InstanceUtils.Services.WebPanel;
@@ -8,7 +8,7 @@ using Spectre.Console;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Torch2API.Models.Commands;
+using IgniteAPI.Models.Commands;
 
 namespace InstanceUtils.Services
 {
@@ -87,7 +87,7 @@ namespace InstanceUtils.Services
             }
             catch (Exception ex)
             {
-                // 💥 Fallback to reflection if DI creation fails
+                // ?? Fallback to reflection if DI creation fails
                 AnsiConsole.MarkupLineInterpolated(
                 $"[bold red][[DI]][/] Failed to create instance of [yellow]{type.Name}[/]: {ex.Message}");
 

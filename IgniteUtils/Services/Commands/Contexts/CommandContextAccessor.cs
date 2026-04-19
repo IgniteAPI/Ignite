@@ -1,7 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
-using Torch2API.Models.Commands;
+using IgniteAPI.Models.Commands;
 
 namespace InstanceUtils.Services.Commands.Contexts
 {

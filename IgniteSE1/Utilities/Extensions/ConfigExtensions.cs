@@ -1,12 +1,12 @@
-﻿using Sandbox.Engine.Utils;
+using Sandbox.Engine.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Torch2API.Models.Configs;
-using Torch2API.Models.SE1;
+using IgniteAPI.Models.Configs;
+using IgniteAPI.Models.SE1;
 using VRage.Game;
 using VRage.Game.ModAPI;
 
@@ -86,7 +86,7 @@ namespace IgniteSE1.Utilities.Extensions
 
         /// <summary>
         /// Copies values from the DTO/model into the runtime IMyConfigDedicated instance.
-        /// This does not persist/save the config to disk — caller should handle saving/restarting if required.
+        /// This does not persist/save the config to disk � caller should handle saving/restarting if required.
         /// </summary>
         public static void SetDedicatedConfig(this IMyConfigDedicated dedicated, ConfigDedicatedSE1 model)
         {

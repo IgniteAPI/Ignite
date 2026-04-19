@@ -366,3 +366,5 @@ FodyWeavers.xsd
 /IgniteSE2/obj/Debug/net9.0/IgniteSE2.AssemblyInfo.cs
 /Ignite/steamcmd
 /Ignite/installed_games/se1
+
+IgniteSE1/DedicatedServer64/

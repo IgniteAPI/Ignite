@@ -1,0 +1,21 @@
+using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Text.Json;
+
+namespace IgniteAPI.Constants
+{
+    public static class TorchConstants
+    {
+        public static readonly JsonSerializerOptions JsonOptions = new()
+        {
+            PropertyNameCaseInsensitive = true,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
+
+        public const string InstanceIdHeader = "Instance-Id";
+
+        public const string WsLog = "instance.log";
+        public const string WsLogHistory = "instance.log.history";
+    }
+}

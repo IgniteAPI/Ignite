@@ -1,4 +1,4 @@
-﻿using IgniteSE1.Services;
+using IgniteSE1.Services;
 using InstanceUtils.Services;
 using InstanceUtils.Services.Commands.Contexts;
 using InstanceUtils.Services.WebPanel;
@@ -11,11 +11,11 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Torch2API.Attributes;
-using Torch2API.Constants;
-using Torch2API.Models.Commands;
-using Torch2API.Models.Configs;
-using Torch2API.Models.Schema;
+using IgniteAPI.Attributes;
+using IgniteAPI.Constants;
+using IgniteAPI.Models.Commands;
+using IgniteAPI.Models.Configs;
+using IgniteAPI.Models.Schema;
 using VRage;
 using VRage.Utils;
 
@@ -64,7 +64,7 @@ namespace IgniteSE1.Commands.Configs
         [Command("custom", "Displays all custom worlds")]
         public async Task GetCustomWorlds()
         {
-            if(_ServerStateService.CurrentServerStatus < Torch2API.Models.ServerStatusEnum.Idle)
+            if(_ServerStateService.CurrentServerStatus < IgniteAPI.Models.ServerStatusEnum.Idle)
             {
                 ctx.RespondLine("Server isnt loaded");
                 return;

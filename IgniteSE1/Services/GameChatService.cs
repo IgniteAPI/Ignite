@@ -6,7 +6,7 @@ using Sandbox.Game.Multiplayer;
 using Sandbox.Game.World;
 using System;
 using System.Threading.Tasks;
-using Torch2API.DTOs.Chat;
+using IgniteAPI.DTOs.Chat;
 using VRage.Game.ModAPI;
 
 namespace IgniteSE1.Services

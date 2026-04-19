@@ -1,0 +1,98 @@
+@using IgniteWebUI.Models.DTOs
+@using IgniteWebUI.Services.ModServices
+@using MudBlazor
+@inject ISnackbar Snackbar
+
+<MudDialog Options="@(new DialogOptions { FullWidth = true, MaxWidth = MaxWidth.Small })">
+    <DialogContent>
+        <MudStack Spacing="3">
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Edit the mod list details
+            </MudText>
+
+            <MudTextField @bind-Value="ModListName"
+                          Label="Mod List Name"
+                          Placeholder="e.g., Survival Mods"
+                          Variant="Variant.Outlined"
+                          FullWidth="true"
+                          AutoFocus="true" />
+
+            <MudTextField @bind-Value="ModListDescription"
+                          Label="Description"
+                          Placeholder="Describe the purpose of this mod list..."
+                          Variant="Variant.Outlined"
+                          FullWidth="true"
+                          Lines="4" />
+        </MudStack>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" 
+                   Color="Color.Primary" 
+                   OnClick="Submit" 
+                   Disabled="IsSubmitDisabled()">
+            Save
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    public IMudDialogInstance MudDialog { get; set; } = null!;
+
+    [Parameter]
+    public ModListDto? ModList { get; set; }
+
+    [Parameter]
+    public IModsService ModsService { get; set; } = null!;
+
+    private string ModListDescription = string.Empty;
+    private string ModListName = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        if (ModList != null)
+        {
+            ModListDescription = ModList.Description ?? string.Empty;
+            ModListName = ModList.Name;
+        }
+    }
+
+    private bool IsSubmitDisabled()
+    {
+        return string.IsNullOrWhiteSpace(ModListName);
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Submit()
+    {
+        if (ModList == null)
+            return;
+
+        try
+        {
+            var request = new CreateModListRequest
+            {
+                Name = ModListName,
+                Description = ModListDescription
+            };
+
+            var success = await ModsService.UpdateModListAsync(ModList.Id, request);
+            if (success)
+            {
+                Snackbar.Add("Mod list updated successfully", Severity.Success);
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            else
+            {
+                Snackbar.Add("Failed to update mod list", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Error updating mod list: {ex.Message}", Severity.Error);
+        }
+    }
+}

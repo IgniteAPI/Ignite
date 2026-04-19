@@ -1,0 +1,221 @@
+@using IgniteWebUI.Components.NavMenus
+@using IgniteWebUI.Models.Contexts
+@using IgniteWebUI.Models
+@using IgniteWebUI.Services
+@using IgniteWebUI.Services.InstanceServices
+@using IgniteAPI.Models
+@inherits LayoutComponentBase
+@inject ThemeService Theme
+@inject NavigationManager Nav
+@inject InstanceManager InstanceManager
+@inject InstanceCommandService CommandService
+@implements IDisposable
+
+<MudThemeProvider Theme="@Theme.CurrentTheme" IsDarkMode="@Theme.IsDarkMode" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<CascadingValue Value="new InstanceContext { InstanceId = InstanceId }">
+    <MudLayout>
+
+        <MudAppBar Elevation="1">
+            <MudIconButton Icon="@Icons.Material.Filled.Menu"
+                           Color="Color.Inherit"
+                           Edge="Edge.Start"
+                           OnClick="@DrawerToggle" />
+
+            <MudText Typo="Typo.h5" Class="ml-3">
+                @(_instance?.Name ?? InstanceId)
+            </MudText>
+
+            @if (_instance is not null)
+            {
+                <MudChip T="ServerStatusEnum"
+                         Color="@GetStatusColor(_instance.ServerStatus)"
+                         Variant="Variant.Filled"
+                         Size="Size.Medium"
+                         Class="ml-2">
+                    @_instance.ServerStatus
+                </MudChip>
+
+                @if (_instance.ServerStatus is ServerStatusEnum.Running or ServerStatusEnum.Starting)
+                {
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Class="ml-3">
+                        <MudIcon Icon="@Icons.Material.Filled.Timer"
+                                 Size="Size.Small"
+                                 Style="opacity:0.7" />
+                        <MudText Typo="Typo.body2" Style="font-variant-numeric:tabular-nums; opacity:0.85;">
+                            @GetDisplayUptime()
+                        </MudText>
+                    </MudStack>
+                }
+
+                @if (_instance.ServerStatus is ServerStatusEnum.Idle or ServerStatusEnum.Stopped)
+                {
+                    <MudButton StartIcon="@Icons.Material.Filled.PlayArrow"
+                               Color="Color.Success"
+                               Variant="Variant.Filled"
+                               Size="Size.Small"
+                               Class="ml-3"
+                               OnClick="StartInstance">
+                        Start
+                    </MudButton>
+                }
+
+                @if (_instance.ServerStatus is ServerStatusEnum.Running)
+                {
+                    <MudButton StartIcon="@Icons.Material.Filled.Stop"
+                               Color="Color.Warning"
+                               Variant="Variant.Filled"
+                               Size="Size.Small"
+                               Class="ml-2"
+                               OnClick="StopInstance">
+                        Stop
+                    </MudButton>
+                }
+            }
+
+            <MudSpacer />
+
+            @if (!string.IsNullOrWhiteSpace(_instance.MachineName))
+            {
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Class="ml-3">
+                    <MudIcon Icon="@Icons.Material.Filled.Computer"
+                             Size="Size.Small"
+                             Style="opacity:0.7" />
+                    <MudText Typo="Typo.body2" Style="opacity:0.85;">
+                        @_instance.MachineName
+                    </MudText>
+                </MudStack>
+            }
+
+            <MudIconButton Icon="@(DarkLightModeButtonIcon)"
+                           Color="Color.Inherit"
+                           OnClick="@DarkModeToggle" />
+        </MudAppBar>
+
+        <!-- INSTANCE NAV DRAWER -->
+        <MudDrawer @bind-Open="_drawerOpen"
+                   ClipMode="DrawerClipMode.Always"
+                   Elevation="2">
+
+            <MudDrawerHeader>
+                <MudText Typo="Typo.h6" Class="mt-1">
+                    @(_instance?.Name ?? InstanceId)
+                </MudText>
+            </MudDrawerHeader>
+
+            <InstanceNavMenu />
+
+        </MudDrawer>
+
+        <MudMainContent Class="pt-20 pa-8">
+            @Body
+        </MudMainContent>
+
+    </MudLayout>
+</CascadingValue>
+
+
+
+@code {
+
+    private string InstanceId =>
+        Nav.ToBaseRelativePath(Nav.Uri)
+            .Split('/', StringSplitOptions.RemoveEmptyEntries)
+            .ElementAtOrDefault(1) ?? "";
+
+    private TorchInstance? _instance;
+    private bool _drawerOpen = true;
+
+    // Uptime tracking: snapshot from last server report + local elapsed time
+    private TimeSpan _baseUptime;
+    private DateTime _uptimeAnchor;
+    private System.Timers.Timer? _uptimeTick;
+
+    protected override void OnInitialized()
+    {
+        _instance = InstanceManager.GetInstanceByID(InstanceId);
+        SnapshotUptime();
+        InstanceManager.OnChange += OnInstanceUpdated;
+
+        _uptimeTick = new System.Timers.Timer(1000);
+        _uptimeTick.AutoReset = true;
+        _uptimeTick.Elapsed += (_, _) => InvokeAsync(StateHasChanged);
+        _uptimeTick.Start();
+    }
+
+    private void SnapshotUptime()
+    {
+        _baseUptime = _instance?.GameUpTime ?? TimeSpan.Zero;
+        _uptimeAnchor = DateTime.UtcNow;
+    }
+
+    private string GetDisplayUptime()
+    {
+        if (_instance is null) return "00:00:00:00";
+
+        var elapsed = DateTime.UtcNow - _uptimeAnchor;
+        var total = _baseUptime + elapsed;
+        if (total < TimeSpan.Zero) total = TimeSpan.Zero;
+        return $"{total.Days:00}:{total.Hours:00}:{total.Minutes:00}:{total.Seconds:00}";
+    }
+
+    private void OnInstanceUpdated(string updatedId)
+    {
+        if (_instance is null || updatedId != _instance.InstanceID)
+            return;
+
+        InvokeAsync(() =>
+        {
+            _instance = InstanceManager.GetInstanceByID(InstanceId);
+            SnapshotUptime();
+            StateHasChanged();
+        });
+    }
+
+    private Task StartInstance()
+    {
+        if (_instance is null) return Task.CompletedTask;
+        return CommandService.SendCommand(_instance, "Server/Start");
+    }
+
+    private Task StopInstance()
+    {
+        if (_instance is null) return Task.CompletedTask;
+        return CommandService.SendCommand(_instance, "Server/Stop");
+    }
+
+    private Color GetStatusColor(ServerStatusEnum status) => status switch
+    {
+        ServerStatusEnum.Running    => Color.Success,
+        ServerStatusEnum.Starting   => Color.Warning,
+        ServerStatusEnum.Stopping   => Color.Warning,
+        ServerStatusEnum.Initializing => Color.Info,
+        ServerStatusEnum.Idle       => Color.Secondary,
+        ServerStatusEnum.Stopped    => Color.Default,
+        ServerStatusEnum.Error      => Color.Error,
+        _                           => Color.Secondary
+    };
+
+    private void DrawerToggle()
+        => _drawerOpen = !_drawerOpen;
+
+    private string DarkLightModeButtonIcon =>
+        Theme.IsDarkMode
+            ? Icons.Material.Filled.LightMode
+            : Icons.Material.Filled.DarkMode;
+
+    private void DarkModeToggle()
+    {
+        Theme.IsDarkMode = !Theme.IsDarkMode;
+    }
+
+    public void Dispose()
+    {
+        InstanceManager.OnChange -= OnInstanceUpdated;
+        _uptimeTick?.Stop();
+        _uptimeTick?.Dispose();
+    }
+}

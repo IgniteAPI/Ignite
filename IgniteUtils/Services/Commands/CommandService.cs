@@ -1,4 +1,4 @@
-﻿using InstanceUtils.Commands;
+using InstanceUtils.Commands;
 using InstanceUtils.Services.Commands;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -12,8 +12,8 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Torch2API.Attributes;
-using Torch2API.Models.Commands;
+using IgniteAPI.Attributes;
+using IgniteAPI.Models.Commands;
 
 namespace InstanceUtils.Services
 {
@@ -151,7 +151,7 @@ namespace InstanceUtils.Services
 
             /*
             //TODO: Implement group-level options if needed
-            // 1️. Group-level options (properties)
+            // 1?. Group-level options (properties)
             foreach (var prop in type.GetProperties(BindingFlags.Instance | BindingFlags.Public))
             {
                 var optAttr = prop.GetCustomAttribute<OptionAttribute>(true);

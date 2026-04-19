@@ -1,4 +1,4 @@
-﻿using IgniteSE1.Services;
+using IgniteSE1.Services;
 using InstanceUtils.Logging;
 using InstanceUtils.Logging;
 using InstanceUtils.Models.Server;

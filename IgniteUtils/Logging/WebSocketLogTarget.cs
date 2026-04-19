@@ -1,6 +1,6 @@
 using NLog;
 using NLog.Targets;
-using Torch2API.DTOs.Logs;
+using IgniteAPI.DTOs.Logs;
 
 namespace InstanceUtils.Logging
 {

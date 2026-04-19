@@ -1,4 +1,4 @@
-﻿using NLog;
+using NLog;
 using NLog.Common;
 using NLog.Targets;
 using System;
@@ -8,7 +8,7 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Torch2API.DTOs.Logs;
+using IgniteAPI.DTOs.Logs;
 using VRage.Scripting;
 
 namespace InstanceUtils.Services.Networking

@@ -1,4 +1,4 @@
-﻿using Spectre.Console;
+using Spectre.Console;
 using System;
 using System.Collections.Generic;
 using System.CommandLine;
@@ -7,8 +7,8 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Torch2API.Attributes;
-using Torch2API.Models.Commands;
+using IgniteAPI.Attributes;
+using IgniteAPI.Models.Commands;
 
 namespace InstanceUtils.Services.Commands
 {

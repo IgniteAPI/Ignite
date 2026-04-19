@@ -1,4 +1,4 @@
-﻿using InstanceUtils.Logging;
+using InstanceUtils.Logging;
 using InstanceUtils.Models.Server;
 using System;
 using System.Collections.Concurrent;
@@ -8,9 +8,9 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Torch2API.Constants;
-using Torch2API.DTOs.Logs;
-using Torch2API.DTOs.WebSockets;
+using IgniteAPI.Constants;
+using IgniteAPI.DTOs.Logs;
+using IgniteAPI.DTOs.WebSockets;
 
 namespace InstanceUtils.Services.WebPanel
 {
