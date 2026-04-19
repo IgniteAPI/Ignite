@@ -94,7 +94,7 @@ pipeline {
         stage('Test') {
             steps {
                 echo 'Running tests...'
-                bat 'dotnet test --configuration Release --no-build --verbosity normal'
+                bat 'dotnet test IgniteSE1.slnx --configuration Release --no-build --verbosity normal'
             }
         }
     }
