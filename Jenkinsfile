@@ -21,7 +21,7 @@ pipeline {
         // Game server cache is per-branch so stable and beta don't collide
         GAME_CACHE_DIR = "${JENKINS_HOME}\\caches\\ignite-se\\GameServer-${GAME_BRANCH_KEY}"
         // Path where the build expects game references
-        SE_DS_PATH = "${WORKSPACE}\\IgniteSE1\\bin\\Debug\\Game"
+        SE_DS_PATH = "${WORKSPACE}\\IgniteSE1\\DedicatedServer64"
         STEAMCMD_ZIP_URL = 'https://steamcdn-a.akamaihd.net/client/installer/steamcmd.zip'
     }
 
@@ -65,11 +65,10 @@ pipeline {
 
         stage('Link Game References') {
             steps {
-                echo 'Copying cached game files to build directory...'
+                echo 'Creating junction to cached game files...'
                 bat """
-                    if not exist "%SE_DS_PATH%" mkdir "%SE_DS_PATH%"
-                    robocopy "%GAME_CACHE_DIR%" "%SE_DS_PATH%" /MIR /NFL /NDL /NJH /NJS /nc /ns /np
-                    if %ERRORLEVEL% LEQ 7 exit /b 0
+                    if exist "%SE_DS_PATH%" rmdir "%SE_DS_PATH%"
+                    mklink /J "%SE_DS_PATH%" "%GAME_CACHE_DIR%\\DedicatedServer64"
                 """
             }
         }
