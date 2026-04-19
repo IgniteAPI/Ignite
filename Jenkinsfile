@@ -77,10 +77,9 @@ pipeline {
         stage('Restore NuGet Packages') {
             steps {
                 echo 'Restoring NuGet packages...'
-                // Restore packages.config for IgniteSE1 (.NET Framework 4.8.1)
+                // Solution-level restore handles both packages.config (IgniteSE1)
+                // and SDK-style projects (Torch2API, Torch2WebUI) via the .NET SDK
                 bat 'nuget restore'
-                // Restore SDK-style projects (Torch2API, Torch2WebUI)
-                bat 'dotnet restore'
             }
         }
 
