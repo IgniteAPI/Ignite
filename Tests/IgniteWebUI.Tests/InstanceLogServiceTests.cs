@@ -47,7 +47,7 @@ public class InstanceLogServiceTests
 
         var scopeFactory = sp.GetRequiredService<IServiceScopeFactory>();
         var cache = sp.GetRequiredService<IMemoryCache>();
-        var instanceManager = new InstanceManager(scopeFactory, cache);
+        var instanceManager = new InstanceManager(scopeFactory, cache, new IgniteWebUICfg());
 
         _sut = new InstanceLogService(config, instanceManager);
     }

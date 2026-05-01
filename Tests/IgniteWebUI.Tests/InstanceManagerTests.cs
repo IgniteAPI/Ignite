@@ -47,7 +47,7 @@ public class InstanceManagerTests : IDisposable
         var scopeFactory = _sp.GetRequiredService<IServiceScopeFactory>();
         var cache = _sp.GetRequiredService<IMemoryCache>();
 
-        _sut = new InstanceManager(scopeFactory, cache);
+        _sut = new InstanceManager(scopeFactory, cache, new IgniteWebUI.Configs.IgniteWebUICfg());
         _sut.EnableServerDiscovery = true;
     }
 
