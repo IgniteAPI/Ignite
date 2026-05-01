@@ -65,7 +65,8 @@ namespace IgniteWebUI
                 app.UseHsts();
             }
 
-            app.UseHttpsRedirection();
+            if (config.Network.UseHttpsRedirection)
+                app.UseHttpsRedirection();
 
             await app.Services.MigrateDatabase();
 

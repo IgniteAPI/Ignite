@@ -5,7 +5,6 @@
 @inject ThemeService ThemeService
 @inject IgniteWebUICfg Config
 @inject ISnackbar Snackbar
-@inject NavigationManager Navigation
 
 <PageTitle>Settings</PageTitle>
 
@@ -31,6 +30,50 @@
                                       FullWidth="true" />
                 </MudStack>
             </MudPaper>
+
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveSettings">
+                Save Settings
+            </MudButton>
+        </MudStack>
+    </MudTabPanel>
+
+    <!-- Network Settings Tab -->
+    <MudTabPanel Text="Network">
+        <MudStack Spacing="4" Class="pa-4">
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudText Typo="Typo.h6" GutterBottom="true">Network Configuration</MudText>
+                <MudStack Spacing="3">
+                    <MudSwitch T="bool" @bind-Value="Config.Network.UseHttpsRedirection"
+                               Label="Enable HTTPS Redirection (disable for reverse proxy / Docker)"
+                               Color="Color.Primary" />
+
+                    <MudNumericField Label="HTTP Timeout (Seconds)"
+                                      @bind-Value="Config.Network.HttpTimeoutSeconds"
+                                      Variant="Variant.Outlined"
+                                      HelperText="HTTP client timeout in seconds for panel requests"
+                                      FullWidth="true" />
+
+                    <MudNumericField Label="WebSocket Reconnect Delay (Seconds)"
+                                      @bind-Value="Config.Network.WsReconnectDelaySeconds"
+                                      Variant="Variant.Outlined"
+                                      HelperText="Delay before attempting a WebSocket reconnection"
+                                      FullWidth="true" />
+
+                    <MudNumericField Label="WebSocket Connection Timeout (Seconds)"
+                                      @bind-Value="Config.Network.WsConnectionTimeoutSeconds"
+                                      Variant="Variant.Outlined"
+                                      HelperText="Timeout when establishing a WebSocket connection"
+                                      FullWidth="true" />
+
+                    <MudNumericField Label="Instance Offline Timeout (Seconds)"
+                                      @bind-Value="Config.Network.InstanceTimeoutSeconds"
+                                      Variant="Variant.Outlined"
+                                      HelperText="Seconds without a heartbeat before an instance is marked offline"
+                                      FullWidth="true" />
+                </MudStack>
+            </MudPaper>
+
+            <MudAlert Severity="Severity.Info">Network timeout changes require a restart to take effect.</MudAlert>
 
             <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveSettings">
                 Save Settings
@@ -69,7 +112,7 @@
                         <MudSelectItem Value="@("Critical")">Critical</MudSelectItem>
                     </MudSelect>
 
-                    <MudSwitch T="bool" @bind-Checked="Config.Logging.EnableInstanceLogging"
+                    <MudSwitch T="bool" @bind-Value="Config.Logging.EnableInstanceLogging"
                                Label="Log Instances to Console"
                                Color="Color.Primary" />
 
@@ -416,7 +459,6 @@
         {
             Config.Save();
             Snackbar.Add("Settings saved successfully", Severity.Success);
-            Navigation.NavigateTo(Navigation.Uri, forceLoad: true);
         }
         catch (Exception ex)
         {

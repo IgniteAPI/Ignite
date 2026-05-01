@@ -17,6 +17,9 @@ namespace IgniteWebUI.Configs
         [YamlMember(Description = "Logging Configuration")]
         public LoggingConfig Logging { get; set; } = new LoggingConfig();
 
+        [YamlMember(Description = "Network Configuration")]
+        public NetworkConfig Network { get; set; } = new NetworkConfig();
+
         [YamlMember(Description = "Dark Theme Palette Configuration")]
         public DarkPaletteConfig DarkPalette { get; set; } = new DarkPaletteConfig();
 

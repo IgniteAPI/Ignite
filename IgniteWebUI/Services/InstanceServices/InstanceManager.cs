@@ -19,7 +19,7 @@ namespace IgniteWebUI.Services.InstanceServices
     {
         public ConcurrentDictionary<string, TorchInstance> ActiveInstances { get; private set; } = new();
 
-        private static readonly TimeSpan _timeout = TimeSpan.FromSeconds(5);
+        private readonly TimeSpan _timeout;
         private readonly Timer CleanupTimer;
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly IMemoryCache _cache;
@@ -30,10 +30,11 @@ namespace IgniteWebUI.Services.InstanceServices
         //Do not need to notify the page when its a bind
         public bool EnableServerDiscovery { get; set; } = false;
 
-        public InstanceManager(IServiceScopeFactory scopeFactory, IMemoryCache cache)
+        public InstanceManager(IServiceScopeFactory scopeFactory, IMemoryCache cache, IgniteWebUI.Configs.IgniteWebUICfg config)
         {
             _cache = cache;
             _scopeFactory = scopeFactory;
+            _timeout = TimeSpan.FromSeconds(config.Network.InstanceTimeoutSeconds);
             CleanupTimer = new Timer(_timeout.Add(TimeSpan.FromSeconds(2)));
             CleanupTimer.AutoReset = false;
 
