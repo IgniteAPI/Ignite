@@ -1,6 +1,5 @@
 using IgniteWebUI.Configs;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace IgniteWebUI.Tests;
 

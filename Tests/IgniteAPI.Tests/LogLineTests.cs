@@ -3,7 +3,6 @@ using IgniteAPI.Constants;
 using System;
 using System.Text.Json;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace IgniteAPI.Tests;
 

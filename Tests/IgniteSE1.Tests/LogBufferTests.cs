@@ -5,8 +5,6 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
-using Xunit.Abstractions;
-
 namespace IgniteSE1.Tests
 {
     public class LogBufferTests

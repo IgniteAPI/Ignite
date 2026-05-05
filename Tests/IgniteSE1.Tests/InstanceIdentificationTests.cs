@@ -2,7 +2,6 @@ using InstanceUtils.Utils.Identification;
 using System;
 using System.IO;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace IgniteSE1.Tests
 {

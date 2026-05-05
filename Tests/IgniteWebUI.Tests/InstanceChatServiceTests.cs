@@ -2,7 +2,6 @@ using IgniteAPI.DTOs.Chat;
 using IgniteWebUI.Configs;
 using IgniteWebUI.Services.InstanceServices;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace IgniteWebUI.Tests;
 

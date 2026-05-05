@@ -2,7 +2,6 @@ using IgniteAPI.DTOs.WebSockets;
 using IgniteAPI.Constants;
 using System.Text.Json;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace IgniteAPI.Tests;
 

@@ -1,7 +1,6 @@
 using IgniteAPI.DTOs.Instances;
 using IgniteAPI.Models;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace IgniteAPI.Tests;
 

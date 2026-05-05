@@ -1,7 +1,6 @@
 using InstanceUtils.Services.Commands;
 using IgniteAPI.Models.Commands;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace IgniteSE1.Tests
 {

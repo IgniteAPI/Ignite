@@ -5,7 +5,6 @@ using IgniteWebUI.Services.SQL;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace IgniteWebUI.Tests;
 

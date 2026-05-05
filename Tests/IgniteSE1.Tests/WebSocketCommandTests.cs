@@ -9,7 +9,6 @@ using System;
 using System.Text.Json;
 using System.Threading;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace IgniteSE1.Tests
 {

@@ -1,6 +1,5 @@
 using InstanceUtils.Utils;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace IgniteSE1.Tests
 {

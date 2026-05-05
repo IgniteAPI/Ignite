@@ -4,7 +4,6 @@ using System;
 using System.IO;
 using YamlDotNet.Serialization;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace IgniteAPI.Tests;
 
