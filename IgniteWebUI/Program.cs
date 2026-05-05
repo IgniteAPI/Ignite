@@ -1,8 +1,15 @@
+using Microsoft.AspNetCore.Components;
+using MudBlazor;
 using MudBlazor.Services;
 using NLog;
+using NLog.Extensions.Logging;
 using NLog.Targets;
 using IgniteWebUI.Components;
+using IgniteWebUI.Components.Dashboard;
+using IgniteWebUI.Components.Dashboard.InstanceInfoWidgets;
 using IgniteWebUI.Configs;
+using IgniteWebUI.Logging;
+using IgniteWebUI.Models.Dashboard;
 using IgniteWebUI.Services;
 using IgniteWebUI.Services.InstanceServices;
 
@@ -16,11 +23,13 @@ namespace IgniteWebUI
             // Load Web Yaml configuration
             IgniteWebUICfg config = IgniteWebUICfg.LoadYaml(Path.Combine(AppContext.BaseDirectory, "IgniteWebUI.yml"));
 
-            // Configure NLog for instance logging
-            SetupInstanceLogging(config);
+            // Configure NLog from nlog.config
+            Target.Register<LogViewerTarget>("LogViewer");
+            LogManager.LoadConfiguration(Path.Combine(AppContext.BaseDirectory, "nlog.config"));
+            LogManager.GlobalThreshold = NLog.LogLevel.FromString(config.Logging.LogLevel);
 
             var builder = WebApplication.CreateBuilder(args);
- 
+
             builder.Services.AddControllers();
 
             // Add MudBlazor services
@@ -35,10 +44,13 @@ namespace IgniteWebUI
             builder.Services.AddSingleton<InstanceSocketManager>();
             builder.Services.AddSingleton<InstanceCommandService>();
             builder.Services.AddSingleton<ThemeService>();
+            builder.Services.AddSingleton<WidgetRegistry>();
+            builder.Services.AddSingleton<DashboardLayoutService>();
             builder.Services.AddSingleton(config);
             builder.Services.AddSocketMessageHandlers(typeof(Program).Assembly);
             builder.Services.SetupSQL();
             builder.Logging.ClearProviders();
+            builder.Logging.AddNLog();
 
             Console.WriteLine("Starting Torch2 Web UI...");
             var app = builder.Build();
@@ -78,6 +90,165 @@ namespace IgniteWebUI
 
 
             Console.WriteLine("Torch2 Web UI started successfully!");
+            LogViewerTarget.Register(app.Services.GetRequiredService<InstanceLogService>());
+
+            // Register core dashboard widgets
+            var widgetRegistry = app.Services.GetRequiredService<WidgetRegistry>();
+            widgetRegistry.Register(new WidgetDescriptor
+            {
+                Id = "core.welcome",
+                DisplayName = "Welcome",
+                Icon = Icons.Material.Filled.Home,
+                ColSpan = 6, RowSpan = 1,
+                Content = () => b => { b.OpenComponent<WelcomeWidget>(0); b.CloseComponent(); }
+            });
+            widgetRegistry.Register(new WidgetDescriptor
+            {
+                Id = "core.active_instances",
+                DisplayName = "Active Instances",
+                Icon = Icons.Material.Filled.Dns,
+                ColSpan = 6, RowSpan = 1,
+                Content = () => b => { b.OpenComponent<ActiveInstancesWidget>(0); b.CloseComponent(); }
+            });
+            widgetRegistry.Register(new WidgetDescriptor
+            {
+                Id = "core.recent_logs",
+                DisplayName = "Recent Logs",
+                Icon = Icons.Material.Filled.Article,
+                ColSpan = 6, RowSpan = 2,
+                Content = () => b => { b.OpenComponent<RecentLogsWidget>(0); b.CloseComponent(); }
+            });
+            widgetRegistry.Register(new WidgetDescriptor
+            {
+                Id = "core.quick_stats",
+                DisplayName = "Quick Stats",
+                Icon = Icons.Material.Filled.BarChart,
+                ColSpan = 4, RowSpan = 2,
+                Content = () => b => { b.OpenComponent<QuickStatsWidget>(0); b.CloseComponent(); }
+            });
+            widgetRegistry.Register(new WidgetDescriptor
+            {
+                Id = "core.server_status",
+                DisplayName = "Server Status",
+                Icon = Icons.Material.Filled.Monitor,
+                ColSpan = 6, RowSpan = 1,
+                Content = () => b => { b.OpenComponent<ServerStatusWidget>(0); b.CloseComponent(); }
+            });
+            widgetRegistry.Register(new WidgetDescriptor
+            {
+                Id = "core.quick_actions",
+                DisplayName = "Quick Actions",
+                Icon = Icons.Material.Filled.Bolt,
+                ColSpan = 3, RowSpan = 1,
+                Content = () => b => { b.OpenComponent<QuickActionsWidget>(0); b.CloseComponent(); },
+                ConfigComponent = widget => b => 
+                { 
+                    b.OpenComponent<QuickActionsWidgetConfig>(0);
+                    b.AddAttribute(1, "Widget", widget);
+                    b.CloseComponent(); 
+                }
+            });
+            widgetRegistry.Register(new WidgetDescriptor
+            {
+                Id = "core.errors",
+                DisplayName = "Errors & Warnings",
+                Icon = Icons.Material.Filled.Warning,
+                ColSpan = 6, RowSpan = 2,
+                Content = () => b => { b.OpenComponent<ErrorsWidget>(0); b.CloseComponent(); }
+            });
+
+            // Register instance info widgets
+            widgetRegistry.Register(new WidgetDescriptor
+            {
+                Id = "instance.world",
+                DisplayName = "World",
+                Icon = Icons.Material.Filled.Public,
+                ColSpan = 4, RowSpan = 1,
+                Content = () => b => { b.OpenComponent<InstanceWorldWidget>(0); b.CloseComponent(); },
+                ConfigComponent = widget => b =>
+                {
+                    b.OpenComponent<InstanceWidgetConfigBase>(0);
+                    b.CloseComponent();
+                }
+            });
+            widgetRegistry.Register(new WidgetDescriptor
+            {
+                Id = "instance.profile",
+                DisplayName = "Profile Name",
+                Icon = Icons.Material.Filled.Description,
+                ColSpan = 4, RowSpan = 1,
+                Content = () => b => { b.OpenComponent<InstanceProfileWidget>(0); b.CloseComponent(); },
+                ConfigComponent = widget => b =>
+                {
+                    b.OpenComponent<InstanceWidgetConfigBase>(0);
+                    b.CloseComponent();
+                }
+            });
+            widgetRegistry.Register(new WidgetDescriptor
+            {
+                Id = "instance.host",
+                DisplayName = "Host Machine",
+                Icon = Icons.Material.Filled.Computer,
+                ColSpan = 4, RowSpan = 1,
+                Content = () => b => { b.OpenComponent<InstanceHostWidget>(0); b.CloseComponent(); },
+                ConfigComponent = widget => b =>
+                {
+                    b.OpenComponent<InstanceWidgetConfigBase>(0);
+                    b.CloseComponent();
+                }
+            });
+            widgetRegistry.Register(new WidgetDescriptor
+            {
+                Id = "instance.address",
+                DisplayName = "Address",
+                Icon = Icons.Material.Filled.LocationOn,
+                ColSpan = 4, RowSpan = 1,
+                Content = () => b => { b.OpenComponent<InstanceAddressWidget>(0); b.CloseComponent(); },
+                ConfigComponent = widget => b =>
+                {
+                    b.OpenComponent<InstanceWidgetConfigBase>(0);
+                    b.CloseComponent();
+                }
+            });
+            widgetRegistry.Register(new WidgetDescriptor
+            {
+                Id = "instance.version",
+                DisplayName = "Torch Version",
+                Icon = Icons.Material.Filled.Info,
+                ColSpan = 4, RowSpan = 1,
+                Content = () => b => { b.OpenComponent<InstanceVersionWidget>(0); b.CloseComponent(); },
+                ConfigComponent = widget => b =>
+                {
+                    b.OpenComponent<InstanceWidgetConfigBase>(0);
+                    b.CloseComponent();
+                }
+            });
+            widgetRegistry.Register(new WidgetDescriptor
+            {
+                Id = "instance.uptime",
+                DisplayName = "Uptime",
+                Icon = Icons.Material.Filled.Schedule,
+                ColSpan = 4, RowSpan = 1,
+                Content = () => b => { b.OpenComponent<InstanceUptimeWidget>(0); b.CloseComponent(); },
+                ConfigComponent = widget => b =>
+                {
+                    b.OpenComponent<InstanceWidgetConfigBase>(0);
+                    b.CloseComponent();
+                }
+            });
+            widgetRegistry.Register(new WidgetDescriptor
+            {
+                Id = "instance.state",
+                DisplayName = "Current State",
+                Icon = Icons.Material.Filled.PlayCircle,
+                ColSpan = 4, RowSpan = 1,
+                Content = () => b => { b.OpenComponent<InstanceStateWidget>(0); b.CloseComponent(); },
+                ConfigComponent = widget => b =>
+                {
+                    b.OpenComponent<InstanceWidgetConfigBase>(0);
+                    b.CloseComponent();
+                }
+            });
             Console.WriteLine($"ConfigPath: {config.filePath}");
             Console.WriteLine($"Panel: {config.PanelName}");
             Console.WriteLine($"Port: {config.Port}");
@@ -93,44 +264,5 @@ namespace IgniteWebUI
         }
 
 
-        //Convert to file?
-        private static void SetupInstanceLogging(IgniteWebUICfg config)
-        {
-            if (!config.Logging.EnableInstanceLogging)
-                return;
-
-            var logConfig = new NLog.Config.LoggingConfiguration();
-
-            var fileTarget = new FileTarget("instanceFile")
-            {
-                FileName = Path.Combine(config.Logging.LogDirectory, "instances.log"),
-                ArchiveFileName = Path.Combine(config.Logging.LogDirectory, "instances.{#}.log"),
-                Layout = "${longdate} | ${level:uppercase=true:padding=5} | ${message}",
-                ArchiveEvery = FileArchivePeriod.Day,
-                ArchiveNumbering = ArchiveNumberingMode.Date,
-                ArchiveDateFormat = "yyyy-MM-dd",
-                MaxArchiveFiles = config.Logging.MaxLogAgeDays,
-            };
-
-            var chatFileTarget = new FileTarget("chatFile")
-            {
-                FileName = Path.Combine(config.Logging.LogDirectory, "chat.log"),
-                ArchiveFileName = Path.Combine(config.Logging.LogDirectory, "chat.{#}.log"),
-                Layout = "${longdate} | ${level:uppercase=true:padding=5} | ${message}",
-                ArchiveEvery = FileArchivePeriod.Day,
-                ArchiveNumbering = ArchiveNumberingMode.Date,
-                ArchiveDateFormat = "yyyy-MM-dd",
-                MaxArchiveFiles = config.Logging.MaxLogAgeDays,
-            };
-
-            var minLogLevel = NLog.LogLevel.FromString(config.Logging.LogLevel);
-
-            logConfig.AddTarget(fileTarget);
-            logConfig.AddTarget(chatFileTarget);
-            logConfig.AddRule(minLogLevel, NLog.LogLevel.Fatal, fileTarget, "IgniteWebUI.Services.InstanceServices.InstanceLogService*");
-            logConfig.AddRule(minLogLevel, NLog.LogLevel.Fatal, chatFileTarget, "IgniteWebUI.Services.InstanceServices.InstanceChatService*");
-
-            LogManager.Configuration = logConfig;
+            }
         }
-    }
-}

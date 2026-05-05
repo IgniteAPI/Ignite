@@ -1,0 +1,48 @@
+@using IgniteWebUI.Services.InstanceServices
+@using IgniteWebUI.Models.Dashboard
+@inject InstanceManager InstanceManager
+
+<MudStack Spacing="3" Class="pa-4">
+    <MudSelect T="string"
+               Label="Select Instance"
+               Value="@_selectedInstanceId"
+               ValueChanged="@OnInstanceSelected"
+               FullWidth="true">
+        @foreach (var instance in InstanceManager.ActiveInstances.Values)
+        {
+            <MudSelectItem Value="@instance.InstanceID">@instance.Name</MudSelectItem>
+        }
+    </MudSelect>
+
+    <MudButton Variant="Variant.Filled"
+               Color="Color.Primary"
+               FullWidth="true"
+               OnClick="SaveConfig">
+        Save Configuration
+    </MudButton>
+</MudStack>
+
+@code {
+    [CascadingParameter]
+    public DashboardWidget Widget { get; set; } = default!;
+
+    private string _selectedInstanceId = "";
+
+    protected override void OnInitialized()
+    {
+        _selectedInstanceId = Widget.GetConfig<string>("InstanceId", "");
+    }
+
+    private void OnInstanceSelected(string instanceId)
+    {
+        _selectedInstanceId = instanceId;
+    }
+
+    private void SaveConfig()
+    {
+        if (!string.IsNullOrEmpty(_selectedInstanceId))
+        {
+            Widget.SetConfig("InstanceId", _selectedInstanceId);
+        }
+    }
+}

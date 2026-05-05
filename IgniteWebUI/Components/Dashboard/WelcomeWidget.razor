@@ -1,0 +1,21 @@
+@using IgniteWebUI.Configs
+@inject IgniteWebUICfg Config
+
+<MudCard Elevation="2" Style="height:100%">
+    <MudCardHeader>
+        <CardHeaderAvatar>
+            <MudIcon Icon="@Icons.Material.Filled.Home" Color="Color.Primary" />
+        </CardHeaderAvatar>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6">@Config.PanelName</MudText>
+        </CardHeaderContent>
+    </MudCardHeader>
+    <MudCardContent>
+        <MudText Typo="Typo.body2" Class="mb-2">
+            Welcome to your Ignite panel. Use the navigation on the left to manage your game instances, mods, and settings.
+        </MudText>
+        <MudText Typo="Typo.caption" Color="Color.Secondary">
+            Drag widgets to rearrange this dashboard using the Edit Layout button.
+        </MudText>
+    </MudCardContent>
+</MudCard>

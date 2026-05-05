@@ -1,0 +1,48 @@
+@using IgniteWebUI.Models.Dashboard
+@using IgniteWebUI.Services
+@using MudBlazor
+
+<MudDialog>
+    <DialogContent>
+        @if (_descriptor?.ConfigComponent != null && Widget != null)
+        {
+            <CascadingValue Value="Widget">
+                @_descriptor.ConfigComponent(Widget)
+            </CascadingValue>
+        }
+        else
+        {
+            <MudAlert Severity="Severity.Info">This widget does not have any configuration options.</MudAlert>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Save">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter] public DashboardWidget Widget { get; set; } = default!;
+    [Parameter] public WidgetRegistry Registry { get; set; } = default!;
+    [Parameter] public DashboardLayoutService LayoutService { get; set; } = default!;
+
+    private WidgetDescriptor? _descriptor;
+
+    protected override void OnInitialized()
+    {
+        _descriptor = Registry.Get(Widget.WidgetId);
+    }
+
+    private void Save()
+    {
+        LayoutService.Save();
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    private void Cancel()
+    {
+        MudDialog.Cancel();
+    }
+}

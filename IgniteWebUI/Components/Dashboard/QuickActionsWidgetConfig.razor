@@ -1,0 +1,100 @@
+@using IgniteWebUI.Models.Dashboard
+@using IgniteWebUI.Services.InstanceServices
+@inject InstanceManager InstanceManager
+
+<MudStack Spacing="3">
+    <MudText Typo="Typo.h6">Quick Actions Configuration</MudText>
+
+    <MudSelect T="string" 
+               Label="Filter by Instance" 
+               Value="_selectedInstanceId"
+               ValueChanged="value => UpdateInstanceFilter(value)"
+               Variant="Variant.Outlined"
+               AnchorOrigin="Origin.BottomCenter">
+        <MudSelectItem T="string" Value="@string.Empty">All Instances</MudSelectItem>
+        @foreach (var instance in _instances)
+        {
+            <MudSelectItem T="string" Value="@instance.InstanceID">@instance.Name</MudSelectItem>
+        }
+    </MudSelect>
+
+    <MudSwitch T="bool"
+               Value="_showStartButton" 
+               ValueChanged="value => UpdateShowStart(value)"
+               Color="Color.Success" 
+               Label="Show Start Button" />
+    <MudSwitch T="bool"
+               Value="_showStopButton" 
+               ValueChanged="value => UpdateShowStop(value)"
+               Color="Color.Error" 
+               Label="Show Stop Button" />
+    <MudSwitch T="bool"
+               Value="_showSaveButton" 
+               ValueChanged="value => UpdateShowSave(value)"
+               Color="Color.Info" 
+               Label="Show Save Button" />
+    <MudSwitch T="bool"
+               Value="_showRestartButton" 
+               ValueChanged="value => UpdateShowRestart(value)"
+               Color="Color.Warning" 
+               Label="Show Restart Button" />
+
+    <MudDivider />
+
+    <MudText Typo="Typo.caption" Color="Color.Secondary">
+        Configure which instance this widget displays and which action buttons are shown.
+    </MudText>
+</MudStack>
+
+@code {
+    [Parameter] public DashboardWidget Widget { get; set; } = default!;
+
+    private List<IgniteWebUI.Models.TorchInstance> _instances = new();
+    private string _selectedInstanceId = string.Empty;
+    private bool _showStopButton = true;
+    private bool _showStartButton = true;
+    private bool _showSaveButton = true;
+    private bool _showRestartButton = true;
+
+    protected override void OnInitialized()
+    {
+        _instances = InstanceManager.ActiveInstances.Values.ToList();
+
+        // Load existing config
+        _selectedInstanceId = Widget.GetConfig<string>("InstanceId", string.Empty);
+        _showStopButton = Widget.GetConfig<bool>("ShowStop", true);
+        _showStartButton = Widget.GetConfig<bool>("ShowStart", true);
+        _showSaveButton = Widget.GetConfig<bool>("ShowSave", true);
+        _showRestartButton = Widget.GetConfig<bool>("ShowRestart", true);
+    }
+
+    private void UpdateInstanceFilter(string value)
+    {
+        _selectedInstanceId = value;
+        Widget.SetConfig("InstanceId", _selectedInstanceId);
+    }
+
+    private void UpdateShowStart(bool value)
+    {
+        _showStartButton = value;
+        Widget.SetConfig("ShowStart", _showStartButton);
+    }
+
+    private void UpdateShowStop(bool value)
+    {
+        _showStopButton = value;
+        Widget.SetConfig("ShowStop", _showStopButton);
+    }
+
+    private void UpdateShowSave(bool value)
+    {
+        _showSaveButton = value;
+        Widget.SetConfig("ShowSave", _showSaveButton);
+    }
+
+    private void UpdateShowRestart(bool value)
+    {
+        _showRestartButton = value;
+        Widget.SetConfig("ShowRestart", _showRestartButton);
+    }
+}

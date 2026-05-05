@@ -1,0 +1,81 @@
+@using IgniteWebUI.Services.InstanceServices
+@using IgniteAPI.Models
+@inject InstanceManager InstanceManager
+@inject NavigationManager Navigation
+@implements IDisposable
+
+<MudCard Elevation="2" Style="height:100%">
+    <MudCardHeader>
+        <CardHeaderAvatar>
+            <MudIcon Icon="@Icons.Material.Filled.Monitor" Color="Color.Primary" />
+        </CardHeaderAvatar>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6">Server Status</MudText>
+        </CardHeaderContent>
+        <CardHeaderActions>
+            <MudIconButton Icon="@Icons.Material.Filled.OpenInNew"
+                           Size="Size.Small"
+                           OnClick='() => Navigation.NavigateTo("/Instances")' />
+        </CardHeaderActions>
+    </MudCardHeader>
+    <MudCardContent>
+        @{
+            var instances = InstanceManager.ActiveInstances.Values.ToList();
+        }
+        @if (!instances.Any())
+        {
+            <MudAlert Severity="Severity.Info" Dense="true">No instances connected.</MudAlert>
+        }
+        else
+        {
+            <MudGrid Spacing="2">
+                @foreach (var inst in instances)
+                {
+                    var navUrl = "/Instance/" + inst.InstanceID;
+                    var (icon, color, label) = GetStatus(inst.ServerStatus);
+                    <MudItem xs="12" sm="6">
+                        <MudPaper Outlined="true" Class="pa-3"
+                                  Style="@($"border-color:{GetBorderColor(inst.ServerStatus)}; cursor:pointer;")"
+                                  @onclick="() => Navigation.NavigateTo(navUrl)">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                                <MudIcon Icon="@icon" Color="@color" Size="Size.Large" />
+                                <MudStack Spacing="0" Style="flex:1; min-width:0;">
+                                    <MudText Typo="Typo.subtitle2" Style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                                        @inst.Name
+                                    </MudText>
+                                    <MudText Typo="Typo.caption" Color="@color">@label</MudText>
+                                </MudStack>
+                            </MudStack>
+                        </MudPaper>
+                    </MudItem>
+                }
+            </MudGrid>
+        }
+    </MudCardContent>
+</MudCard>
+
+@code {
+    protected override void OnInitialized()
+        => InstanceManager.OnChange += OnChanged;
+
+    private void OnChanged(string _) => InvokeAsync(StateHasChanged);
+
+    private static (string icon, Color color, string label) GetStatus(ServerStatusEnum status) => status switch
+    {
+        ServerStatusEnum.Running  => (Icons.Material.Filled.CheckCircle,  Color.Success, "Running"),
+        ServerStatusEnum.Starting => (Icons.Material.Filled.HourglassTop, Color.Warning, "Starting…"),
+        ServerStatusEnum.Stopping => (Icons.Material.Filled.HourglassBottom, Color.Warning, "Stopping…"),
+        ServerStatusEnum.Error    => (Icons.Material.Filled.Error,        Color.Error,   "Error"),
+        _                         => (Icons.Material.Filled.Circle,       Color.Default, "Stopped"),
+    };
+
+    private static string GetBorderColor(ServerStatusEnum status) => status switch
+    {
+        ServerStatusEnum.Running  => "var(--mud-palette-success)",
+        ServerStatusEnum.Starting or ServerStatusEnum.Stopping => "var(--mud-palette-warning)",
+        ServerStatusEnum.Error    => "var(--mud-palette-error)",
+        _                         => "var(--mud-palette-divider)",
+    };
+
+    public void Dispose() => InstanceManager.OnChange -= OnChanged;
+}

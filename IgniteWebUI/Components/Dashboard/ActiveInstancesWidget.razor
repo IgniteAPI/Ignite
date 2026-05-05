@@ -1,0 +1,73 @@
+@using IgniteWebUI.Services.InstanceServices
+@inject InstanceManager InstanceManager
+@inject NavigationManager Navigation
+@implements IDisposable
+
+<MudCard Elevation="2" Style="height:100%">
+    <MudCardHeader>
+        <CardHeaderAvatar>
+            <MudIcon Icon="@Icons.Material.Filled.Dns" Color="Color.Primary" />
+        </CardHeaderAvatar>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6">Active Instances</MudText>
+        </CardHeaderContent>
+        <CardHeaderActions>
+            <MudIconButton Icon="@Icons.Material.Filled.OpenInNew"
+                           Size="Size.Small"
+                           OnClick='() => Navigation.NavigateTo("/Instances")' />
+        </CardHeaderActions>
+    </MudCardHeader>
+    <MudCardContent>
+        @{
+            var instances = InstanceManager.ActiveInstances.Values.ToList();
+        }
+        @if (!instances.Any())
+        {
+            <MudText Typo="Typo.body2" Color="Color.Secondary">No active instances connected.</MudText>
+        }
+        else
+        {
+            <MudList T="string" Dense="true">
+                @foreach (var instance in instances)
+                {
+                    <MudListItem Icon="@Icons.Material.Filled.Circle"
+                                 IconColor="@GetStatusColor(instance.ServerStatus)"
+                                 OnClick="@(() => Navigation.NavigateTo($"/Instance/{instance.InstanceID}"))">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            <MudText Typo="Typo.body2">@instance.Name</MudText>
+                            <MudSpacer />
+                            <MudChip T="string" Size="Size.Small"
+                                     Color="@GetStatusColor(instance.ServerStatus)"
+                                     Variant="Variant.Outlined">
+                                @instance.ServerStatus
+                            </MudChip>
+                        </MudStack>
+                    </MudListItem>
+                }
+            </MudList>
+        }
+    </MudCardContent>
+</MudCard>
+
+@code {
+    protected override void OnInitialized()
+    {
+        InstanceManager.OnChange += OnInstanceChanged;
+    }
+
+    private void OnInstanceChanged(string _) => InvokeAsync(StateHasChanged);
+
+    private Color GetStatusColor(IgniteAPI.Models.ServerStatusEnum status) => status switch
+    {
+        IgniteAPI.Models.ServerStatusEnum.Running => Color.Success,
+        IgniteAPI.Models.ServerStatusEnum.Starting => Color.Warning,
+        IgniteAPI.Models.ServerStatusEnum.Stopping => Color.Warning,
+        IgniteAPI.Models.ServerStatusEnum.Stopped or IgniteAPI.Models.ServerStatusEnum.Error => Color.Error,
+        _ => Color.Default
+    };
+
+    public void Dispose()
+    {
+        InstanceManager.OnChange -= OnInstanceChanged;
+    }
+}

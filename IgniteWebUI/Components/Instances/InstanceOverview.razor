@@ -1,10 +1,12 @@
 @page "/instances/{InstanceId}"
 @using IgniteWebUI.Models.Contexts
+@using IgniteWebUI.Components.Dashboard
 @using MudBlazor.Charts
 @layout InstanceLayout
 @implements IDisposable
 
 @inject InstanceManager InstanceManager
+@inject DashboardLayoutService LayoutService
 <PageTitle>Instance Overview</PageTitle>
 
 @if (_instance is null)
@@ -28,74 +30,6 @@ else
     </MudStack>
 
     <MudDivider Class="my-2" />
-
-    <!-- Info Cards -->
-    <MudGrid Spacing="3">
-
-        <MudItem xs="12" sm="6" md="4">
-            <MudCard>
-                <MudCardContent>
-                    <MudText Typo="Typo.subtitle2">World</MudText>
-                    <MudText Typo="Typo.body1">@_instance.TargetWorld</MudText>
-                </MudCardContent>
-            </MudCard>
-        </MudItem>
-
-        <MudItem xs="12" sm="6" md="4">
-            <MudCard>
-                <MudCardContent>
-                    <MudText Typo="Typo.subtitle2">Profile Name</MudText>
-                    <MudText Typo="Typo.body1">@_instance.ProfileName</MudText>
-                </MudCardContent>
-            </MudCard>
-        </MudItem>
-
-        <MudItem xs="12" sm="6" md="4">
-            <MudCard>
-                <MudCardContent>
-                    <MudText Typo="Typo.subtitle2">Host Machine</MudText>
-                    <MudText Typo="Typo.body1">@_instance.MachineName</MudText>
-                </MudCardContent>
-            </MudCard>
-        </MudItem>
-
-        <MudItem xs="12" sm="6" md="4">
-            <MudCard>
-                <MudCardContent>
-                    <MudText Typo="Typo.subtitle2">Address</MudText>
-                    <MudText Typo="Typo.body1">@_instance.IPAddress:@_instance.GamePort</MudText>
-                </MudCardContent>
-            </MudCard>
-        </MudItem>
-
-        <MudItem xs="12" sm="6" md="4">
-            <MudCard>
-                <MudCardContent>
-                    <MudText Typo="Typo.subtitle2">Torch Version</MudText>
-                    <MudText Typo="Typo.body1">@_instance.TorchVersion</MudText>
-                </MudCardContent>
-            </MudCard>
-        </MudItem>
-
-        <MudItem xs="12" sm="6" md="4">
-            <MudCard>
-                <MudCardContent>
-                    <MudText Typo="Typo.subtitle2">Uptime</MudText>
-                    <MudText Typo="Typo.body1">@_instance.GetFormattedGameUptime()</MudText>
-                </MudCardContent>
-            </MudCard>
-        </MudItem>
-
-        <MudItem xs="12" sm="6" md="4">
-            <MudCard>
-                <MudCardContent>
-                    <MudText Typo="Typo.subtitle2">Current State</MudText>
-                    <MudText Typo="Typo.body1">@_instance.CurrentStateCmd</MudText>
-                </MudCardContent>
-            </MudCard>
-        </MudItem>
-
-    </MudGrid>
 
     <!-- Live Metrics -->
     <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Class="mt-6 mb-3">
@@ -176,6 +110,10 @@ else
         </MudItem>
 
     </MudGrid>
+
+    <!-- Widget Grid for Instance Overview Page -->
+    <MudDivider Class="my-6" />
+    <WidgetGrid LayoutService="LayoutService" LayoutId="@_layoutId" />
 }
 
 @code {
@@ -185,6 +123,7 @@ else
     public InstanceContext Context { get; set; } = default!;
 
     private TorchInstanceBase? _instance;
+    private string _layoutId = string.Empty;
 
     // -- History ------------------------------------------------------------
     private const int MaxPoints = 20;
@@ -228,6 +167,8 @@ else
     protected override void OnInitialized()
     {
         _instance = InstanceManager.GetInstanceByID(Context.InstanceId);
+        _layoutId = $"instance-overview-{Context.InstanceId}";
+        LayoutService.SwitchLayout(_layoutId);
         RecordSnapshot();
         InstanceManager.OnChange += OnInstanceUpdated;
     }

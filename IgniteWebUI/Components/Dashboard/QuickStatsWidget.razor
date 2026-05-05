@@ -1,0 +1,83 @@
+@using IgniteWebUI.Services.InstanceServices
+@inject InstanceManager InstanceManager
+@inject InstanceLogService LogService
+@implements IDisposable
+
+<MudCard Elevation="2" Style="height:100%">
+    <MudCardHeader>
+        <CardHeaderAvatar>
+            <MudIcon Icon="@Icons.Material.Filled.BarChart" Color="Color.Primary" />
+        </CardHeaderAvatar>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6">Quick Stats</MudText>
+        </CardHeaderContent>
+    </MudCardHeader>
+    <MudCardContent>
+        <MudGrid Spacing="2">
+            <MudItem xs="6">
+                <MudPaper Outlined="true" Class="pa-3 d-flex flex-column align-center">
+                    <MudText Typo="Typo.h4" Color="Color.Primary">@_activeCount</MudText>
+                    <MudText Typo="Typo.caption">Active Instances</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="6">
+                <MudPaper Outlined="true" Class="pa-3 d-flex flex-column align-center">
+                    <MudText Typo="Typo.h4" Color="Color.Secondary">@_pendingCount</MudText>
+                    <MudText Typo="Typo.caption">Pending Adoption</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="6">
+                <MudPaper Outlined="true" Class="pa-3 d-flex flex-column align-center">
+                    <MudText Typo="Typo.h4" Color="Color.Success">@_runningCount</MudText>
+                    <MudText Typo="Typo.caption">Running</MudText>
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="6">
+                <MudPaper Outlined="true" Class="pa-3 d-flex flex-column align-center">
+                    <MudText Typo="Typo.h4" Color="Color.Warning">@_logsToday</MudText>
+                    <MudText Typo="Typo.caption">Log Entries (session)</MudText>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    private int _activeCount;
+    private int _pendingCount;
+    private int _runningCount;
+    private int _logsToday;
+
+    protected override void OnInitialized()
+    {
+        InstanceManager.OnChange += OnInstanceChanged;
+        LogService.OnLog += OnLog;
+        RefreshStats();
+    }
+
+    private void OnInstanceChanged(string _)
+    {
+        RefreshStats();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnLog(string _, IgniteAPI.DTOs.Logs.LogLine __)
+    {
+        _logsToday++;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void RefreshStats()
+    {
+        var active = InstanceManager.ActiveInstances.Values.ToList();
+        _activeCount = active.Count;
+        _pendingCount = InstanceManager.GetPendingInstances().Count;
+        _runningCount = active.Count(i => i.ServerStatus.ToString() == "Running");
+    }
+
+    public void Dispose()
+    {
+        InstanceManager.OnChange -= OnInstanceChanged;
+        LogService.OnLog -= OnLog;
+    }
+}

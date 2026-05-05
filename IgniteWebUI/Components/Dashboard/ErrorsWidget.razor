@@ -1,0 +1,80 @@
+@using IgniteWebUI.Services.InstanceServices
+@using IgniteAPI.DTOs.Logs
+@inject InstanceLogService LogService
+@inject NavigationManager Navigation
+@implements IDisposable
+
+<MudCard Elevation="2" Style="height:100%">
+    <MudCardHeader>
+        <CardHeaderAvatar>
+            <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Warning" />
+        </CardHeaderAvatar>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6">Errors &amp; Warnings</MudText>
+        </CardHeaderContent>
+        <CardHeaderActions>
+            <MudTooltip Text="Clear">
+                <MudIconButton Icon="@Icons.Material.Filled.ClearAll"
+                               Size="Size.Small"
+                               OnClick="() => { _entries.Clear(); StateHasChanged(); }" />
+            </MudTooltip>
+            <MudIconButton Icon="@Icons.Material.Filled.OpenInNew"
+                           Size="Size.Small"
+                           OnClick='() => Navigation.NavigateTo("/LogViewer")' />
+        </CardHeaderActions>
+    </MudCardHeader>
+    <MudCardContent Style="overflow-y:auto; max-height:260px;">
+        @if (!_entries.Any())
+        {
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Small" />
+                <MudText Typo="Typo.body2" Color="Color.Secondary">No errors or warnings.</MudText>
+            </MudStack>
+        }
+        else
+        {
+            @foreach (var entry in Enumerable.Reverse(_entries))
+            {
+                <MudStack Row="true" AlignItems="AlignItems.Start" Spacing="1" Class="mb-1">
+                    <MudChip T="string" Size="Size.Small"
+                             Color="@(entry.Level == "ERROR" ? Color.Error : Color.Warning)"
+                             Variant="Variant.Filled">
+                        @entry.Level
+                    </MudChip>
+                    <MudStack Spacing="0" Style="flex:1; min-width:0;">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                            @entry.InstanceName · @entry.Timestamp.ToLocalTime().ToString("HH:mm:ss")
+                        </MudText>
+                        <MudText Typo="Typo.caption" Style="word-break:break-word;">@entry.Message</MudText>
+                    </MudStack>
+                </MudStack>
+            }
+        }
+    </MudCardContent>
+    @if (_entries.Any())
+    {
+        <MudCardActions>
+            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="ml-2">
+                @_entries.Count issue@(_entries.Count != 1 ? "s" : "") since last clear
+            </MudText>
+        </MudCardActions>
+    }
+</MudCard>
+
+@code {
+    private const int MaxEntries = 50;
+    private readonly List<LogLine> _entries = new();
+
+    protected override void OnInitialized()
+        => LogService.OnLog += OnLog;
+
+    private void OnLog(string _, LogLine line)
+    {
+        if (line.Level is not ("ERROR" or "WARN" or "WARNING" or "FATAL")) return;
+        _entries.Add(line);
+        if (_entries.Count > MaxEntries) _entries.RemoveAt(0);
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose() => LogService.OnLog -= OnLog;
+}

@@ -1,0 +1,80 @@
+@using IgniteWebUI.Services.InstanceServices
+@using IgniteAPI.DTOs.Logs
+@inject InstanceLogService LogService
+@inject NavigationManager Navigation
+@implements IDisposable
+
+<MudCard Elevation="2" Style="height:100%">
+    <MudCardHeader>
+        <CardHeaderAvatar>
+            <MudIcon Icon="@Icons.Material.Filled.Article" Color="Color.Primary" />
+        </CardHeaderAvatar>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6">Recent Logs</MudText>
+        </CardHeaderContent>
+        <CardHeaderActions>
+            <MudIconButton Icon="@Icons.Material.Filled.OpenInNew"
+                           Size="Size.Small"
+                           OnClick='() => Navigation.NavigateTo("/LogViewer")' />
+        </CardHeaderActions>
+    </MudCardHeader>
+    <MudCardContent Style="max-height:240px; overflow-y:auto;">
+        @if (!_renderSnapshot.Any())
+        {
+            <MudText Typo="Typo.body2" Color="Color.Secondary">No log entries yet.</MudText>
+        }
+        else
+        {
+            @foreach (var entry in _renderSnapshot)
+            {
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Class="mb-1">
+                    <MudChip T="string" Size="Size.Small"
+                             Color="@GetLevelColor(entry.Level)"
+                             Variant="Variant.Outlined">
+                        @entry.Level
+                    </MudChip>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">@entry.InstanceName</MudText>
+                    <MudText Typo="Typo.caption" Style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                        @entry.Message
+                    </MudText>
+                </MudStack>
+            }
+        }
+    </MudCardContent>
+</MudCard>
+
+@code {
+    private const int MaxEntries = 20;
+    private readonly Queue<LogLine> _recentLogs = new();
+    private List<LogLine> _renderSnapshot = new();
+
+    protected override void OnInitialized()
+    {
+        LogService.OnLog += OnLog;
+    }
+
+    private void OnLog(string _, LogLine line)
+    {
+        lock (_recentLogs)
+        {
+            _recentLogs.Enqueue(line);
+            while (_recentLogs.Count > MaxEntries)
+                _recentLogs.Dequeue();
+            _renderSnapshot = _recentLogs.ToList();
+        }
+        InvokeAsync(StateHasChanged);
+    }
+
+    private Color GetLevelColor(string? level) => level?.ToLower() switch
+    {
+        "error" or "fatal" => Color.Error,
+        "warn" or "warning" => Color.Warning,
+        "info" or "information" => Color.Info,
+        _ => Color.Default
+    };
+
+    public void Dispose()
+    {
+        LogService.OnLog -= OnLog;
+    }
+}

@@ -1,0 +1,137 @@
+@using IgniteWebUI.Services.InstanceServices
+@using IgniteWebUI.Models
+@using IgniteWebUI.Models.Dashboard
+@using IgniteAPI.Models
+@inject InstanceManager InstanceManager
+@inject InstanceCommandService CommandService
+@implements IDisposable
+
+<MudCard Elevation="2" Style="height:100%">
+    <MudCardHeader>
+        <CardHeaderAvatar>
+            <MudIcon Icon="@Icons.Material.Filled.Bolt" Color="Color.Primary" />
+        </CardHeaderAvatar>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6">Quick Actions</MudText>
+        </CardHeaderContent>
+    </MudCardHeader>
+    <MudCardContent>
+        @{
+            var allInstances = InstanceManager.ActiveInstances.Values.ToList();
+
+            // Filter by configured instance if set
+            var instances = string.IsNullOrEmpty(_filterInstanceId) 
+                ? allInstances 
+                : allInstances.Where(i => i.InstanceID == _filterInstanceId).ToList();
+        }
+        @if (!instances.Any())
+        {
+            <MudAlert Severity="Severity.Info" Dense="true">
+                @if (string.IsNullOrEmpty(_filterInstanceId))
+                {
+                    <text>No instances connected.</text>
+                }
+                else
+                {
+                    <text>Selected instance is not connected.</text>
+                }
+            </MudAlert>
+        }
+        else
+        {
+            <MudStack Spacing="2">
+                @foreach (var inst in instances)
+                {
+                    bool running = inst.ServerStatus == ServerStatusEnum.Running;
+                    bool stopped = inst.ServerStatus == ServerStatusEnum.Stopped;
+                    bool busy    = inst.ServerStatus is ServerStatusEnum.Starting or ServerStatusEnum.Stopping;
+                    var capturedInst = inst;
+
+                    <MudPaper Outlined="true" Class="pa-2">
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            <MudText Typo="Typo.body2" Style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0;">
+                                @inst.Name
+                            </MudText>
+                            @if (_showStart)
+                            {
+                                <MudTooltip Text="Start">
+                                    <MudIconButton Icon="@Icons.Material.Filled.PlayArrow"
+                                                   Color="Color.Success" Size="Size.Small"
+                                                   Disabled="@(!stopped || busy)"
+                                                   OnClick="@(() => CommandService.SendCommand(capturedInst, "Server/Start"))" />
+                                </MudTooltip>
+                            }
+                            @if (_showStop)
+                            {
+                                <MudTooltip Text="Stop">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Stop"
+                                                   Color="Color.Error" Size="Size.Small"
+                                                   Disabled="@(!running || busy)"
+                                                   OnClick="@(() => CommandService.SendCommand(capturedInst, "Server/Stop"))" />
+                                </MudTooltip>
+                            }
+                            @if (_showSave)
+                            {
+                                <MudTooltip Text="Save World">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Save"
+                                                   Color="Color.Primary" Size="Size.Small"
+                                                   Disabled="@(!running)"
+                                                   OnClick="@(() => CommandService.SendCommand(capturedInst, "Server/Save"))" />
+                                </MudTooltip>
+                            }
+                            @if (_showRestart)
+                            {
+                                <MudTooltip Text="Restart">
+                                    <MudIconButton Icon="@Icons.Material.Filled.RestartAlt"
+                                                   Color="Color.Warning" Size="Size.Small"
+                                                   Disabled="@(!running || busy)"
+                                                   OnClick="@(() => CommandService.SendCommand(capturedInst, "Server/Restart"))" />
+                                </MudTooltip>
+                            }
+                        </MudStack>
+                    </MudPaper>
+                }
+            </MudStack>
+        }
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [CascadingParameter(Name = "WidgetInstance")]
+    public DashboardWidget? WidgetInstance { get; set; }
+
+    private string _filterInstanceId = string.Empty;
+    private bool _showStart = true;
+    private bool _showStop = true;
+    private bool _showSave = true;
+    private bool _showRestart = true;
+
+    protected override void OnInitialized()
+    {
+        InstanceManager.OnChange += OnChanged;
+        LoadConfig();
+    }
+
+    protected override void OnParametersSet()
+    {
+        LoadConfig();
+    }
+
+    private void LoadConfig()
+    {
+        if (WidgetInstance == null) return;
+
+        _filterInstanceId = WidgetInstance.GetConfig<string>("InstanceId", string.Empty);
+        _showStart = WidgetInstance.GetConfig<bool>("ShowStart", true);
+        _showStop = WidgetInstance.GetConfig<bool>("ShowStop", true);
+        _showSave = WidgetInstance.GetConfig<bool>("ShowSave", true);
+        _showRestart = WidgetInstance.GetConfig<bool>("ShowRestart", true);
+    }
+
+    private void OnChanged(string _)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose() => InstanceManager.OnChange -= OnChanged;
+}

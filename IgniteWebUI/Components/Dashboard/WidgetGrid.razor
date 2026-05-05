@@ -1,0 +1,585 @@
+@using IgniteWebUI.Models.Dashboard
+@using IgniteWebUI.Services
+@inject WidgetRegistry Registry
+@inject IDialogService DialogService
+
+<style>
+    /* 12-column explicit grid — nothing auto-places */
+    .widgets-grid {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        grid-auto-rows: minmax(160px, auto);
+        align-items: stretch;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .widget-item {
+        transition: transform 0.18s ease, opacity 0.18s ease;
+        position: relative;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Stretch the widget content to fill the full cell height */
+    .widget-item > div:last-child {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .widget-item > div:last-child > * {
+        flex: 1;
+    }
+    .widget-item.dragging {
+        opacity: 0.3;
+        transform: scale(0.96);
+    }
+    .widget-item.drag-over {
+        transform: scale(1.02);
+    }
+
+    .drop-overlay {
+        display: none;
+        position: absolute;
+        inset: 0;
+        z-index: 10;
+        border-radius: 8px;
+        border: 2px dashed var(--mud-palette-primary);
+        background: color-mix(in srgb, var(--mud-palette-primary) 12%, transparent);
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        color: var(--mud-palette-primary);
+        font-size: 0.8rem;
+        font-weight: 600;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.15s ease;
+    }
+    .widget-item.drag-over .drop-overlay {
+        display: flex;
+        opacity: 1;
+    }
+
+    /* Empty slot cells — edit mode only, sized dynamically to match dragged widget span */
+    .grid-slot {
+        border: 2px dashed rgba(128, 128, 128, 0.2);
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        color: rgba(128, 128, 128, 0.3);
+        font-size: 0.75rem;
+        font-weight: 500;
+        transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+    }
+    .grid-slot.slot-drag-over {
+        border-color: var(--mud-palette-primary);
+        background: color-mix(in srgb, var(--mud-palette-primary) 10%, transparent);
+        color: var(--mud-palette-primary);
+    }
+
+    /* Origin cell — shows the grid cells the dragged widget is leaving */
+    .grid-origin {
+        border: 2px dashed rgba(128, 128, 128, 0.45);
+        border-radius: 8px;
+        background: rgba(128, 128, 128, 0.06);
+        pointer-events: none;
+    }
+</style>
+
+<MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-4">
+    <MudText Typo="Typo.h4">Dashboard</MudText>
+    <MudSpacer />
+    <MudButton StartIcon="@(_editMode ? Icons.Material.Filled.Check : Icons.Material.Filled.Edit)"
+               Variant="Variant.Outlined"
+               Color="@(_editMode ? Color.Success : Color.Default)"
+               OnClick="ToggleEdit">
+        @(_editMode ? "Done" : "Edit Layout")
+    </MudButton>
+</MudStack>
+
+<div style="display:flex; align-items:flex-start; gap:24px;">
+
+    <div style="flex:1; min-width:0;">
+        <div class="widgets-grid">
+
+            @foreach (var widget in LayoutService.Widgets.Where(w => w.Visible || _editMode))
+            {
+                var descriptor = Registry.Get(widget.WidgetId);
+                if (descriptor == null) continue;
+
+                bool isDragging = _dragging?.InstanceId == widget.InstanceId;
+                string wid = "w:" + widget.InstanceId.ToString();
+                bool isDragOver = _dragOverId == wid && !isDragging;
+                string gridCol = (widget.Col + 1) + " / span " + widget.ColSpan;
+                string gridRow = (widget.Row + 1) + " / span " + widget.RowSpan;
+                string itemStyle = "grid-column:" + gridCol + "; grid-row:" + gridRow + ";" + (_editMode ? " cursor:grab;" : "");
+                string itemClass = "widget-item" + (isDragging ? " dragging" : "") + (isDragOver ? " drag-over" : "");
+
+                <div draggable="@(_editMode.ToString().ToLower())"
+                     class="@itemClass"
+                     style="@itemStyle"
+                     @ondragstart="() => OnDragStart(widget)"
+                     @ondragend="OnDragEnd"
+                     @ondragenter="() => OnEnter(wid)"
+                     @ondragleave="() => OnLeave(wid)"
+                     @ondragover:preventDefault="true"
+                     @ondrop="() => OnDropOnWidget(widget)">
+
+                    <div class="drop-overlay">
+                        <MudIcon Icon="@Icons.Material.Filled.SwapVert" Size="Size.Small" />
+                        Swap
+                    </div>
+
+                    @if (_editMode)
+                    {
+                        var tempColSpan = _tempSizes.TryGetValue(widget.InstanceId, out var size) ? size.colSpan : widget.ColSpan;
+                        var tempRowSpan = _tempSizes.TryGetValue(widget.InstanceId, out var size2) ? size2.rowSpan : widget.RowSpan;
+
+                        <MudPaper Class="pa-1 mb-1 d-flex align-center mud-theme-primary"
+                                  Style="border-radius:4px 4px 0 0;">
+                            <MudIcon Icon="@Icons.Material.Filled.DragIndicator" Size="Size.Small" Class="mr-1" />
+                            <MudIcon Icon="@descriptor.Icon" Size="Size.Small" Class="mr-1" />
+                            <MudText Typo="Typo.caption">@descriptor.DisplayName</MudText>
+                            <MudSpacer />
+                            <MudMenu Icon="@Icons.Material.Filled.AspectRatio" 
+                                     Size="Size.Small" 
+                                     Dense="true"
+                                     AnchorOrigin="Origin.BottomRight"
+                                     TransformOrigin="Origin.TopRight"
+                                     ActivationEvent="MouseEvent.LeftClick"
+                                     PositionAtCursor="false">
+                                <MudStack Spacing="2" Class="pa-3" Style="min-width:220px;">
+                                    <MudStack Spacing="1">
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary"><strong>Width (Columns)</strong></MudText>
+                                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Remove"
+                                                           Size="Size.Small"
+                                                           Disabled="@(tempColSpan <= 1)"
+                                                           OnClick="() => UpdateTempWidth(widget, -1)" />
+                                            <MudSlider T="int" 
+                                                       Value="@tempColSpan" 
+                                                       ValueChanged="@(v => UpdateTempWidth(widget, v - tempColSpan))"
+                                                       Min="1" 
+                                                       Max="12" 
+                                                       Step="1"
+                                                       Style="flex:1;" />
+                                            <MudIconButton Icon="@Icons.Material.Filled.Add"
+                                                           Size="Size.Small"
+                                                           Disabled="@(tempColSpan >= 12)"
+                                                           OnClick="() => UpdateTempWidth(widget, 1)" />
+                                            <MudText Typo="Typo.body2" Style="min-width:30px; text-align:center;">
+                                                @tempColSpan
+                                            </MudText>
+                                        </MudStack>
+                                    </MudStack>
+
+                                    <MudDivider />
+
+                                    <MudStack Spacing="1">
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary"><strong>Height (Rows)</strong></MudText>
+                                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Remove"
+                                                           Size="Size.Small"
+                                                           Disabled="@(tempRowSpan <= 1)"
+                                                           OnClick="() => UpdateTempHeight(widget, -1)" />
+                                            <MudSlider T="int" 
+                                                       Value="@tempRowSpan" 
+                                                       ValueChanged="@(v => UpdateTempHeight(widget, v - tempRowSpan))"
+                                                       Min="1" 
+                                                       Max="10" 
+                                                       Step="1"
+                                                       Style="flex:1;" />
+                                            <MudIconButton Icon="@Icons.Material.Filled.Add"
+                                                           Size="Size.Small"
+                                                           Disabled="@(tempRowSpan >= 10)"
+                                                           OnClick="() => UpdateTempHeight(widget, 1)" />
+                                            <MudText Typo="Typo.body2" Style="min-width:30px; text-align:center;">
+                                                @tempRowSpan
+                                            </MudText>
+                                        </MudStack>
+                                    </MudStack>
+
+                                    <MudDivider />
+
+                                    <MudButton FullWidth="true"
+                                               Variant="Variant.Filled"
+                                               Color="Color.Primary"
+                                               Size="Size.Small"
+                                               OnClick="() => ApplyTempSizes(widget)">
+                                        Apply
+                                    </MudButton>
+                                </MudStack>
+                            </MudMenu>
+                            @if (descriptor.ConfigComponent != null)
+                            {
+                                <MudTooltip Text="Configure widget">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Settings"
+                                                   Size="Size.Small"
+                                                   OnClick="() => OpenWidgetConfig(widget)" />
+                                </MudTooltip>
+                            }
+                            <MudTooltip Text="Remove from dashboard">
+                                <MudIconButton Icon="@Icons.Material.Filled.Close"
+                                               Size="Size.Small"
+                                               OnClick="() => RemoveWidget(widget.InstanceId)" />
+                            </MudTooltip>
+                        </MudPaper>
+                    }
+
+                    <div style="@(!widget.Visible && _editMode ? "opacity:0.4;" : "")" @key="@($"{widget.InstanceId}_{widget.ConfigVersion}")">
+                        <CascadingValue Value="widget" Name="WidgetInstance">
+                            @descriptor.Content()
+                        </CascadingValue>
+                    </div>
+                </div>
+            }
+
+            @* Empty drop slots sized to the dragged widget so you see exactly which columns it will occupy *@
+            @if (_editMode)
+            {
+                int dragCs = _dragging != null ? _dragging.ColSpan : 1;
+                int dragRs = _dragging != null ? _dragging.RowSpan : 1;
+
+                @* Origin cell — highlights the grid position the dragged widget is leaving *@
+                @if (_dragging != null)
+                {
+                    string oCol = (_dragging.Col + 1) + " / span " + _dragging.ColSpan;
+                    string oRow = (_dragging.Row + 1) + " / span " + _dragging.RowSpan;
+                    string oStyle = "grid-column:" + oCol + "; grid-row:" + oRow + ";";
+                    <div class="grid-origin" style="@oStyle"></div>
+                }
+
+                foreach (var slot in GetFreeSlots(dragCs, dragRs))
+                {
+                    string sid = "s:" + slot.col + "," + slot.row;
+                    bool isSlotOver = _dragOverId == sid;
+                    string slotCol = (slot.col + 1) + " / span " + dragCs;
+                    string slotRow = (slot.row + 1) + " / span " + dragRs;
+                    string slotStyle = "grid-column:" + slotCol + "; grid-row:" + slotRow + ";";
+                    string slotClass = "grid-slot" + (isSlotOver ? " slot-drag-over" : "");
+
+                    <div class="@slotClass"
+                         style="@slotStyle"
+                         @ondragenter="() => OnEnter(sid)"
+                         @ondragleave="() => OnLeave(sid)"
+                         @ondragover:preventDefault="true"
+                         @ondrop="() => OnDropOnSlot(slot.col, slot.row)">
+                        <MudIcon Icon="@Icons.Material.Filled.Add" Size="Size.Small" />
+                        @(slot.col + "," + slot.row)
+                    </div>
+                }
+            }
+
+        </div>
+    </div>
+
+    @if (_editMode)
+    {
+        <div style="width:240px; flex-shrink:0; position:sticky; top:16px;">
+            <MudExpansionPanels Elevation="2">
+                <MudExpansionPanel IsInitiallyExpanded="true">
+                    <TitleContent>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            <MudIcon Icon="@Icons.Material.Filled.Widgets" Size="Size.Small" Color="Color.Primary" />
+                            <MudText Typo="Typo.subtitle2"><strong>Widgets</strong></MudText>
+                            <MudSpacer />
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary">
+                                @Registry.All.Count()
+                            </MudChip>
+                        </MudStack>
+                    </TitleContent>
+                    <ChildContent>
+                        <MudStack Spacing="1" Class="mt-1">
+                            @{
+                                var activeWidgetsByType = LayoutService.Widgets.Where(w => w.Visible)
+                                    .GroupBy(w => w.WidgetId)
+                                    .ToDictionary(g => g.Key, g => g.ToList(), StringComparer.OrdinalIgnoreCase);
+                            }
+                            @if (!Registry.All.Any())
+                            {
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">No widgets registered.</MudText>
+                            }
+                            else
+                            {
+                                foreach (var desc in Registry.All)
+                                {
+                                    var instances = activeWidgetsByType.TryGetValue(desc.Id, out var list) ? list : new List<DashboardWidget>();
+                                    int instanceCount = instances.Count;
+
+                                    <MudPaper Outlined="true" Class="pa-2"
+                                              Style="@(instanceCount > 0 ? "border-color:var(--mud-palette-primary);" : "")">
+                                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                            <MudIcon Icon="@desc.Icon" Size="Size.Small"
+                                                     Color="@(instanceCount > 0 ? Color.Primary : Color.Default)" />
+                                            <MudStack Spacing="0" Style="flex:1; min-width:0;">
+                                                <MudText Typo="Typo.body2" Style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                                    @desc.DisplayName
+                                                </MudText>
+                                                <MudText Typo="Typo.caption" Color="Color.Secondary" Style="font-size:0.62rem;">
+                                                    @(desc.ColSpan + " col × " + desc.RowSpan + " row")
+                                                </MudText>
+                                            </MudStack>
+                                            @if (instanceCount > 0)
+                                            {
+                                                <MudChip T="string" Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary">
+                                                    @instanceCount
+                                                </MudChip>
+                                            }
+                                            <MudTooltip Text="Add to dashboard">
+                                                <MudIconButton Icon="@Icons.Material.Filled.AddCircleOutline"
+                                                               Size="Size.Small" Color="Color.Primary"
+                                                               OnClick="() => AddWidget(desc.Id)" />
+                                            </MudTooltip>
+                                        </MudStack>
+
+                                        @if (instanceCount > 0)
+                                        {
+                                            <MudStack Spacing="1" Class="mt-2">
+                                                @foreach (var instance in instances)
+                                                {
+                                                    <MudPaper Outlined="true" Class="pa-1 d-flex align-center" Style="background:rgba(128,128,128,0.05);">
+                                                        <MudIcon Icon="@Icons.Material.Filled.DragIndicator" Size="Size.Small" Class="mr-1" Style="opacity:0.5;" />
+                                                        <MudText Typo="Typo.caption" Style="flex:1; min-width:0; font-size:0.65rem;">
+                                                            Position: @instance.Col, @instance.Row
+                                                        </MudText>
+                                                        <MudTooltip Text="Remove this instance">
+                                                            <MudIconButton Icon="@Icons.Material.Filled.Close"
+                                                                           Size="Size.Small"
+                                                                           OnClick="() => RemoveWidget(instance.InstanceId)" />
+                                                        </MudTooltip>
+                                                    </MudPaper>
+                                                }
+                                            </MudStack>
+                                        }
+                                    </MudPaper>
+                                }
+                            }
+                        </MudStack>
+                    </ChildContent>
+                </MudExpansionPanel>
+            </MudExpansionPanels>
+        </div>
+    }
+
+</div>
+
+@code {
+    [Parameter] public DashboardLayoutService LayoutService { get; set; } = default!;
+
+    /// <summary>
+    /// Optional layout ID for multi-page support (e.g., "dashboard", "instances", "mods").
+    /// Defaults to "dashboard". Change this to have separate widget layouts for different pages.
+    /// </summary>
+    [Parameter] public string LayoutId { get; set; } = "dashboard";
+
+    private bool _editMode;
+    private DashboardWidget? _dragging;
+    private string? _dragOverId;
+    private readonly Dictionary<string, int> _enterCounters = new();
+    private readonly Dictionary<Guid, (int colSpan, int rowSpan)> _tempSizes = new();
+
+    protected override void OnParametersSet()
+    {
+        // Switch to the specified layout when the LayoutId parameter changes
+        if (LayoutService.CurrentLayoutId != LayoutId)
+        {
+            LayoutService.SwitchLayout(LayoutId);
+        }
+    }
+
+    /// <summary>
+    /// Yields every top-left (col, row) position where a widget of the given span fits
+    /// without overlapping any currently placed visible widget.
+    /// </summary>
+    private IEnumerable<(int col, int row)> GetFreeSlots(int colSpan, int rowSpan)
+    {
+        var occupied = new HashSet<(int, int)>();
+        // Exclude the widget being dragged — its cells are available as drop targets
+        var visible = LayoutService.Widgets.Where(w => w.Visible && w.InstanceId != _dragging?.InstanceId).ToList();
+        foreach (var w in visible)
+            for (int r = w.Row; r < w.Row + w.RowSpan; r++)
+                for (int c = w.Col; c < w.Col + w.ColSpan; c++)
+                    occupied.Add((c, r));
+
+        int maxRow = visible.Count > 0 ? visible.Max(w => w.Row + w.RowSpan - 1) + 1 : 0;
+
+        for (int row = 0; row <= maxRow; row++)
+            for (int col = 0; col <= 12 - colSpan; col++)
+            {
+                bool fits = true;
+                for (int dr = 0; dr < rowSpan && fits; dr++)
+                    for (int dc = 0; dc < colSpan && fits; dc++)
+                        if (occupied.Contains((col + dc, row + dr))) fits = false;
+                if (fits) yield return (col, row);
+            }
+    }
+
+    private void ToggleEdit()
+    {
+        _editMode = !_editMode;
+        if (!_editMode)
+        {
+            _dragging = null;
+            _dragOverId = null;
+            _enterCounters.Clear();
+            _tempSizes.Clear();
+            LayoutService.Save();
+        }
+    }
+
+    private void OnDragStart(DashboardWidget widget)
+    {
+        _dragging = widget;
+        _enterCounters.Clear();
+        _dragOverId = null;
+        StateHasChanged();
+    }
+
+    private void OnDragEnd()
+    {
+        _dragging = null;
+        _dragOverId = null;
+        _enterCounters.Clear();
+        StateHasChanged();
+    }
+
+    private void OnEnter(string id)
+    {
+        if (_dragging == null) return;
+        _enterCounters[id] = (_enterCounters.TryGetValue(id, out var c) ? c : 0) + 1;
+        if (_dragOverId != id)
+        {
+            _dragOverId = id;
+            StateHasChanged();
+        }
+    }
+
+    private void OnLeave(string id)
+    {
+        if (!_enterCounters.TryGetValue(id, out var c)) return;
+        _enterCounters[id] = c - 1;
+        if (_enterCounters[id] <= 0)
+        {
+            _enterCounters.Remove(id);
+            if (_dragOverId == id)
+            {
+                _dragOverId = null;
+                StateHasChanged();
+            }
+        }
+    }
+
+    private void OnDropOnWidget(DashboardWidget target)
+    {
+        if (_dragging == null || _dragging.InstanceId == target.InstanceId) return;
+        LayoutService.SwapWidgets(_dragging.InstanceId, target.InstanceId);
+        _dragging = null;
+        _dragOverId = null;
+        _enterCounters.Clear();
+        StateHasChanged();
+    }
+
+    private void OnDropOnSlot(int col, int row)
+    {
+        if (_dragging == null) return;
+        LayoutService.MoveWidget(_dragging.InstanceId, col, row);
+        _dragging = null;
+        _dragOverId = null;
+        _enterCounters.Clear();
+        StateHasChanged();
+    }
+
+    private void AddWidget(string widgetId)
+    {
+        LayoutService.AddWidget(widgetId);
+        StateHasChanged();
+    }
+
+    private void RemoveWidget(Guid instanceId)
+    {
+        LayoutService.RemoveWidget(instanceId);
+        _tempSizes.Remove(instanceId);
+        StateHasChanged();
+    }
+
+    private void UpdateTempWidth(DashboardWidget widget, int delta)
+    {
+        if (!_tempSizes.TryGetValue(widget.InstanceId, out var size))
+        {
+            size = (widget.ColSpan, widget.RowSpan);
+        }
+
+        int newColSpan = Math.Max(1, Math.Min(12, size.colSpan + delta));
+        _tempSizes[widget.InstanceId] = (newColSpan, size.rowSpan);
+        StateHasChanged();
+    }
+
+    private void UpdateTempHeight(DashboardWidget widget, int delta)
+    {
+        if (!_tempSizes.TryGetValue(widget.InstanceId, out var size))
+        {
+            size = (widget.ColSpan, widget.RowSpan);
+        }
+
+        int newRowSpan = Math.Max(1, Math.Min(10, size.rowSpan + delta));
+        _tempSizes[widget.InstanceId] = (size.colSpan, newRowSpan);
+        StateHasChanged();
+    }
+
+    private void ApplyTempSizes(DashboardWidget widget)
+    {
+        bool changed = false;
+        if (_tempSizes.TryGetValue(widget.InstanceId, out var size))
+        {
+            if (size.colSpan != widget.ColSpan)
+            {
+                LayoutService.UpdateWidgetColSpan(widget.InstanceId, size.colSpan);
+                changed = true;
+            }
+            if (size.rowSpan != widget.RowSpan)
+            {
+                LayoutService.UpdateWidgetRowSpan(widget.InstanceId, size.rowSpan);
+                changed = true;
+            }
+            _tempSizes.Remove(widget.InstanceId);
+        }
+
+        if (changed)
+        {
+            LayoutService.Save();
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task OpenWidgetConfig(DashboardWidget widget)
+    {
+        var parameters = new DialogParameters
+        {
+            { "Widget", widget },
+            { "Registry", Registry },
+            { "LayoutService", LayoutService }
+        };
+
+        var options = new DialogOptions 
+        { 
+            CloseOnEscapeKey = true,
+            MaxWidth = MaxWidth.Small,
+            FullWidth = true
+        };
+
+        var dialog = await DialogService.ShowAsync<WidgetConfigDialog>("Configure Widget", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            StateHasChanged();
+        }
+    }
+}
