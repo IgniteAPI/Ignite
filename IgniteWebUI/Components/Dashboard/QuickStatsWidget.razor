@@ -1,7 +1,10 @@
 @using IgniteWebUI.Services.InstanceServices
+@using IgniteWebUI.Attributes
+@using MudBlazor
 @inject InstanceManager InstanceManager
 @inject InstanceLogService LogService
 @implements IDisposable
+@attribute [WidgetDescriptor("core.quick_stats", "Quick Stats", Icon = Icons.Material.Filled.BarChart, ColSpan = 4, RowSpan = 2)]
 
 <MudCard Elevation="2" Style="height:100%">
     <MudCardHeader>

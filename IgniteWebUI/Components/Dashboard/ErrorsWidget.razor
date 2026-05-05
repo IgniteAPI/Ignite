@@ -1,8 +1,11 @@
 @using IgniteWebUI.Services.InstanceServices
 @using IgniteAPI.DTOs.Logs
+@using IgniteWebUI.Attributes
+@using MudBlazor
 @inject InstanceLogService LogService
 @inject NavigationManager Navigation
 @implements IDisposable
+@attribute [WidgetDescriptor("core.errors", "Errors & Warnings", Icon = Icons.Material.Filled.Warning, ColSpan = 6, RowSpan = 2)]
 
 <MudCard Elevation="2" Style="height:100%">
     <MudCardHeader>

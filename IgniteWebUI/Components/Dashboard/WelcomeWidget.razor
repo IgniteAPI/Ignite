@@ -1,5 +1,8 @@
 @using IgniteWebUI.Configs
+@using IgniteWebUI.Attributes
+@using MudBlazor
 @inject IgniteWebUICfg Config
+@attribute [WidgetDescriptor("core.welcome", "Welcome", Icon = Icons.Material.Filled.Home, ColSpan = 6)]
 
 <MudCard Elevation="2" Style="height:100%">
     <MudCardHeader>

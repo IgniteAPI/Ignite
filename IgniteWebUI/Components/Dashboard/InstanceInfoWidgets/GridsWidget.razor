@@ -1,0 +1,194 @@
+@using IgniteWebUI.Services.InstanceServices
+@using IgniteWebUI.Models.Dashboard
+@using IgniteWebUI.Attributes
+@using MudBlazor
+@using MudBlazor.Charts
+@using IgniteAPI.Models
+@inject InstanceManager InstanceManager
+@inject InstanceMetricsService MetricsService
+@implements IDisposable
+@attribute [WidgetDescriptor("instance.grids", "Total Grids", Icon = Icons.Material.Filled.GridOn, ColSpan = 6, RowSpan = 2, HasConfig = true)]
+
+<MudCard Elevation="2" Style="height:100%">
+    <MudCardContent>
+        @if (_instance == null)
+        {
+            <MudText Color="Color.Secondary">No instance selected</MudText>
+        }
+        else
+        {
+            <MudStack Spacing="2">
+                @if (_showGraph)
+                {
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                        <div>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Current</MudText>
+                            <MudText Typo="Typo.h5">@_instance.TotalGrids</MudText>
+                        </div>
+                        <div style="text-align: right;">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Max</MudText>
+                            <MudText Typo="Typo.h5">@_maxGrids</MudText>
+                        </div>
+                    </MudStack>
+                    <MudDivider />
+                    @if (_dataPointCount > 1)
+                    {
+                        <MudChart ChartType="ChartType.Line"
+                                  ChartSeries="@_chartSeries"
+                                  XAxisLabels="@_xAxisLabels"
+                                  Width="100%"
+                                  Height="200px"
+                                  MatchBoundsToSize="true"
+                                  ChartOptions="@_chartOptions" />
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.body2" Align="Align.Center" Class="pa-6 mud-text-secondary">
+                            Waiting for data…
+                        </MudText>
+                    }
+                    <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Justify="Justify.Center">
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">@_dataPointCount points</MudText>
+                    </MudStack>
+                }
+                else
+                {
+                    <MudStack Spacing="2" AlignItems="AlignItems.Center" Justify="Justify.Center">
+                        <MudIcon Icon="@Icons.Material.Filled.GridOn" Size="Size.Large" />
+                        <div style="text-align: center;">
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">Total Grids</MudText>
+                            <MudText Typo="Typo.h4">@_instance.TotalGrids</MudText>
+                        </div>
+                    </MudStack>
+                }
+            </MudStack>
+        }
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [CascadingParameter(Name = "WidgetInstance")]
+    public DashboardWidget Widget { get; set; } = default!;
+
+    private TorchInstanceBase? _instance;
+    private uint _maxGrids = 0;
+    private int _dataPointCount = 0;
+    private bool _showGraph = false;
+    private System.Timers.Timer? _updateTimer;
+
+    private List<ChartSeries<double>> _chartSeries = [];
+    private string[] _xAxisLabels = [];
+
+    private readonly LineChartOptions _chartOptions = new()
+    {
+        YAxisRequireZeroPoint = true,
+        MaxNumYAxisTicks = 2,
+        ChartPalette = ["#FF9800"],
+        YAxisTicks = 1,
+    };
+
+    protected override void OnInitialized()
+    {
+        LoadConfig();
+        LoadInstance();
+        UpdateChart();
+        StartAutoRefresh();
+    }
+
+    private void LoadConfig()
+    {
+        _showGraph = Widget?.GetConfig<bool>("ShowGraph", false) ?? false;
+    }
+
+    private void LoadInstance()
+    {
+        string instanceId = Widget?.GetConfig<string>("InstanceId", "") ?? "";
+        if (!string.IsNullOrEmpty(instanceId))
+        {
+            _instance = InstanceManager.GetInstanceByID(instanceId);
+        }
+    }
+
+    private void StartAutoRefresh()
+    {
+        _updateTimer = new System.Timers.Timer(1000); // Update every second
+        _updateTimer.Elapsed += async (s, e) =>
+        {
+            LoadInstance();
+            UpdateStats();
+            if (_showGraph)
+            {
+                UpdateChart();
+            }
+            await InvokeAsync(StateHasChanged);
+        };
+        _updateTimer.Start();
+    }
+
+    private void UpdateStats()
+    {
+        if (_instance == null) return;
+
+        var metrics = MetricsService.GetMetricsHistory(_instance.InstanceID, 300);
+        _dataPointCount = metrics.Count;
+
+        if (metrics.Count > 0)
+        {
+            _maxGrids = metrics.Max(m => m.TotalGrids);
+        }
+    }
+
+    private void UpdateChart()
+    {
+        if (_instance == null || _dataPointCount < 2)
+        {
+            _chartSeries = [];
+            _xAxisLabels = [];
+            return;
+        }
+
+        try
+        {
+            var metrics = MetricsService.GetMetricsHistory(_instance.InstanceID, 300);
+            if (metrics.Count == 0) return;
+
+            // Create chart data
+            var gridsData = metrics.Select(m => (double)m.TotalGrids).ToArray();
+
+            // Create X axis labels (show every nth label to avoid crowding)
+            var labelInterval = Math.Max(1, metrics.Count / 10);
+            var labels = new List<string>();
+            for (int i = 0; i < metrics.Count; i++)
+            {
+                if (i % labelInterval == 0)
+                {
+                    labels.Add(metrics[i].Timestamp.ToLocalTime().ToString("HH:mm:ss"));
+                }
+                else
+                {
+                    labels.Add("");
+                }
+            }
+            _xAxisLabels = labels.ToArray();
+
+            // Create chart series
+            _chartSeries = 
+            [
+                new ChartSeries<double>
+                {
+                    Name = "Grids",
+                    Data = gridsData
+                }
+            ];
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error updating chart: {ex.Message}");
+        }
+    }
+
+    public void Dispose()
+    {
+        _updateTimer?.Dispose();
+    }
+}

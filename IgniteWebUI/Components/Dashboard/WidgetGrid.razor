@@ -93,7 +93,7 @@
 </style>
 
 <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-4">
-    <MudText Typo="Typo.h4">Dashboard</MudText>
+    <MudText Typo="Typo.h4">@Name</MudText>
     <MudSpacer />
     <MudButton StartIcon="@(_editMode ? Icons.Material.Filled.Check : Icons.Material.Filled.Edit)"
                Variant="Variant.Outlined"
@@ -108,7 +108,7 @@
     <div style="flex:1; min-width:0;">
         <div class="widgets-grid">
 
-            @foreach (var widget in LayoutService.Widgets.Where(w => w.Visible || _editMode))
+            @foreach (var widget in LayoutService.Widgets.Where(w => w.Visible))
             {
                 var descriptor = Registry.Get(widget.WidgetId);
                 if (descriptor == null) continue;
@@ -377,6 +377,7 @@
     /// Defaults to "dashboard". Change this to have separate widget layouts for different pages.
     /// </summary>
     [Parameter] public string LayoutId { get; set; } = "dashboard";
+    [Parameter] public string Name { get; set; } = "Dashboard";
 
     private bool _editMode;
     private DashboardWidget? _dragging;

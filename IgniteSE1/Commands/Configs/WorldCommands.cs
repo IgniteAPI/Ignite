@@ -45,8 +45,8 @@ namespace IgniteSE1.Commands.Configs
         [Command("list", "Displays all the worlds")]
         public async Task List()
         {
-            var instances = _InstanceManager.GetAllWorlds();
             _InstanceManager.LoadAllWorlds();
+            var instances = _InstanceManager.GetAllWorlds();
 
             if (ctx is WebPanelContext)
             {

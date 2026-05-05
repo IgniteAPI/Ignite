@@ -1,8 +1,11 @@
 @using IgniteWebUI.Services.InstanceServices
 @using IgniteAPI.DTOs.Logs
+@using IgniteWebUI.Attributes
+@using MudBlazor
 @inject InstanceLogService LogService
 @inject NavigationManager Navigation
 @implements IDisposable
+@attribute [WidgetDescriptor("core.recent_logs", "Recent Logs", Icon = Icons.Material.Filled.Article, ColSpan = 6, RowSpan = 2)]
 
 <MudCard Elevation="2" Style="height:100%">
     <MudCardHeader>

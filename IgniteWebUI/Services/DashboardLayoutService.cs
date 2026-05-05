@@ -114,7 +114,7 @@ namespace IgniteWebUI.Services
                                 {
                                     InstanceId = Guid.NewGuid(),
                                     WidgetId = descriptor.Id,
-                                    Col = 0, Row = 0,
+                                    Col = 0, Row = 1000,
                                     ColSpan = descriptor.ColSpan, RowSpan = descriptor.RowSpan,
                                     Visible = false
                                 });
@@ -211,14 +211,26 @@ namespace IgniteWebUI.Services
             int cs = descriptor?.ColSpan ?? 6;
             int rs = descriptor?.RowSpan ?? 1;
 
-            // Find first free slot
-            var (col, row) = FindFreeSlot(cs);
+            // Check if widget already exists (was pre-registered but hidden)
+            var existing = Widgets.FirstOrDefault(w => w.WidgetId == widgetId);
+            if (existing != null)
+            {
+                // Find first free slot and reposition the existing widget
+                var (col, row) = FindFreeSlot(cs);
+                existing.Col = col;
+                existing.Row = row;
+                existing.Visible = true;
+                return;
+            }
+
+            // Widget doesn't exist yet, create new one
+            var (freeCol, freeRow) = FindFreeSlot(cs);
             var widget = new DashboardWidget
             {
                 InstanceId = Guid.NewGuid(),
                 WidgetId = widgetId,
-                Col = col,
-                Row = row,
+                Col = freeCol,
+                Row = freeRow,
                 ColSpan = cs,
                 RowSpan = rs,
                 Visible = true

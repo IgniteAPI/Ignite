@@ -8,6 +8,7 @@ using IgniteAPI.Models;
 using IgniteAPI.Models.Configs;
 using IgniteAPI.Models.Schema;
 using IgniteWebUI.Components.Pages;
+using IgniteWebUI.Configs;
 using IgniteWebUI.Models;
 using IgniteWebUI.Services.SQL;
 using Timer = System.Timers.Timer;
@@ -23,6 +24,7 @@ namespace IgniteWebUI.Services.InstanceServices
         private readonly Timer CleanupTimer;
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly IMemoryCache _cache;
+        private InstanceMetricsService? _metricsService;
 
         public event Action<string>? OnChange;
         private void NotifyStateChanged(string instanceid) => OnChange?.Invoke(instanceid);
@@ -30,7 +32,7 @@ namespace IgniteWebUI.Services.InstanceServices
         //Do not need to notify the page when its a bind
         public bool EnableServerDiscovery { get; set; } = false;
 
-        public InstanceManager(IServiceScopeFactory scopeFactory, IMemoryCache cache, IgniteWebUI.Configs.IgniteWebUICfg config)
+        public InstanceManager(IServiceScopeFactory scopeFactory, IMemoryCache cache, IgniteWebUICfg config)
         {
             _cache = cache;
             _scopeFactory = scopeFactory;
@@ -43,6 +45,11 @@ namespace IgniteWebUI.Services.InstanceServices
 
             // Load configured instances from database (fire and forget)
             Task.Run(() => LoadConfiguredInstancesAsync());
+        }
+
+        public void SetMetricsService(InstanceMetricsService metricsService)
+        {
+            _metricsService = metricsService;
         }
 
         private async Task LoadConfiguredInstancesAsync()
@@ -102,6 +109,8 @@ namespace IgniteWebUI.Services.InstanceServices
             if (ActiveInstances.ContainsKey(instance.InstanceID))
             {
                 ActiveInstances[instance.InstanceID].UpdateFromConfiguredInstance(instance);
+                // Record metrics for analytics
+                _metricsService?.RecordMetrics(instance.InstanceID, instance);
             }
 
             NotifyStateChanged(instance.InstanceID);

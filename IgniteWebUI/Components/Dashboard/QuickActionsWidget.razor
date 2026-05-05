@@ -2,7 +2,10 @@
 @using IgniteWebUI.Models
 @using IgniteWebUI.Models.Dashboard
 @using IgniteAPI.Models
+@using IgniteWebUI.Attributes
+@using MudBlazor
 @inject InstanceManager InstanceManager
+@attribute [WidgetDescriptor("core.quick_actions", "Quick Actions", Icon = Icons.Material.Filled.Bolt, ColSpan = 3, HasConfig = true)]
 @inject InstanceCommandService CommandService
 @implements IDisposable
 

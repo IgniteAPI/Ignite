@@ -9,7 +9,7 @@
 @inject IDialogService DialogService
 
 <PageTitle>Instance Worlds</PageTitle>
-@if (_instance is null || _instance.WorldInfos.Count == 0)
+@if (_instance is null || _instance.WorldInfos is null)
 {
     <MudProgressCircular Indeterminate />
     return;
@@ -164,7 +164,7 @@
 
     private void OnInstanceUpdated(string updatedId)
     {
-        if (updatedId != _instance.InstanceID)
+        if (_instance is null || updatedId != _instance.InstanceID)
             return;
 
         InvokeAsync(() =>

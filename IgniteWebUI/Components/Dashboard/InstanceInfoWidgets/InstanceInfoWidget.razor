@@ -1,0 +1,153 @@
+@using IgniteWebUI.Services.InstanceServices
+@using IgniteWebUI.Models.Dashboard
+@using IgniteWebUI.Attributes
+@using MudBlazor
+@using IgniteAPI.Models
+@inject InstanceManager InstanceManager
+@implements IDisposable
+@attribute [WidgetDescriptor("instance.info", "Instance Info", Icon = Icons.Material.Filled.Info, ColSpan = 6, HasConfig = true)]
+
+<MudCard Elevation="2" Style="height:100%">
+    <MudCardContent>
+        @if (_instance == null)
+        {
+            <MudText Color="Color.Secondary">No instance selected</MudText>
+        }
+        else
+        {
+            <MudStack Spacing="2">
+                @if (_showWorld)
+                {
+                    <div>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">World</MudText>
+                        <MudText Typo="Typo.body2">@_instance.TargetWorld</MudText>
+                    </div>
+                }
+                @if (_showProfile)
+                {
+                    <div>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Profile</MudText>
+                        <MudText Typo="Typo.body2">@_instance.ProfileName</MudText>
+                    </div>
+                }
+                @if (_showHost)
+                {
+                    <div>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Host</MudText>
+                        <MudText Typo="Typo.body2">@_instance.MachineName</MudText>
+                    </div>
+                }
+                @if (_showAddress)
+                {
+                    <div>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Address</MudText>
+                        <MudText Typo="Typo.body2">@_instance.IPAddress:@_instance.GamePort</MudText>
+                    </div>
+                }
+                @if (_showVersion)
+                {
+                    <div>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Torch Version</MudText>
+                        <MudText Typo="Typo.body2">@_instance.TorchVersion</MudText>
+                    </div>
+                }
+                @if (_showUptime)
+                {
+                    <div>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">Uptime</MudText>
+                        <MudText Typo="Typo.body2">@_uptimeText</MudText>
+                    </div>
+                }
+                @if (_showState)
+                {
+                    <div>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">State</MudText>
+                        <MudChip T="string" Size="Size.Small" Color="@GetStateColor()">
+                            @_instance.ServerStatus
+                        </MudChip>
+                    </div>
+                }
+            </MudStack>
+        }
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [CascadingParameter(Name = "WidgetInstance")]
+    public DashboardWidget Widget { get; set; } = default!;
+
+    private TorchInstanceBase? _instance;
+    private string _uptimeText = "";
+    private bool _showWorld = true;
+    private bool _showProfile = true;
+    private bool _showHost = true;
+    private bool _showAddress = true;
+    private bool _showVersion = true;
+    private bool _showUptime = true;
+    private bool _showState = true;
+    private System.Timers.Timer? _updateTimer;
+
+    protected override void OnInitialized()
+    {
+        LoadConfig();
+        LoadInstance();
+        StartAutoRefresh();
+    }
+
+    private void LoadConfig()
+    {
+        _showWorld = Widget.GetConfig<bool>("ShowWorld", true);
+        _showProfile = Widget.GetConfig<bool>("ShowProfile", true);
+        _showHost = Widget.GetConfig<bool>("ShowHost", true);
+        _showAddress = Widget.GetConfig<bool>("ShowAddress", true);
+        _showVersion = Widget.GetConfig<bool>("ShowVersion", true);
+        _showUptime = Widget.GetConfig<bool>("ShowUptime", true);
+        _showState = Widget.GetConfig<bool>("ShowState", true);
+    }
+
+    private void LoadInstance()
+    {
+        string instanceId = Widget.GetConfig<string>("InstanceId", "");
+        if (!string.IsNullOrEmpty(instanceId))
+        {
+            _instance = InstanceManager.GetInstanceByID(instanceId);
+            UpdateUptime();
+        }
+    }
+
+    private void StartAutoRefresh()
+    {
+        _updateTimer = new System.Timers.Timer(1000); // Update every second
+        _updateTimer.Elapsed += async (s, e) =>
+        {
+            LoadInstance();
+            UpdateUptime();
+            await InvokeAsync(StateHasChanged);
+        };
+        _updateTimer.Start();
+    }
+
+    private void UpdateUptime()
+    {
+        if (_instance != null)
+        {
+            _uptimeText = _instance.GetFormattedGameUptime();
+        }
+    }
+
+    private Color GetStateColor()
+    {
+        return _instance?.ServerStatus switch
+        {
+            ServerStatusEnum.Running => Color.Success,
+            ServerStatusEnum.Stopped => Color.Error,
+            _ => Color.Default
+        };
+    }
+
+    public void Dispose()
+    {
+        _updateTimer?.Dispose();
+    }
+}
+

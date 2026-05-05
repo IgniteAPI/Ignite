@@ -43,6 +43,7 @@ namespace IgniteWebUI
             builder.Services.AddSingleton<InstanceChatService>();
             builder.Services.AddSingleton<InstanceSocketManager>();
             builder.Services.AddSingleton<InstanceCommandService>();
+            builder.Services.AddSingleton<InstanceMetricsService>();
             builder.Services.AddSingleton<ThemeService>();
             builder.Services.AddSingleton<WidgetRegistry>();
             builder.Services.AddSingleton<DashboardLayoutService>();
@@ -89,166 +90,17 @@ namespace IgniteWebUI
             app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 
 
-            Console.WriteLine("Torch2 Web UI started successfully!");
+             Console.WriteLine("Torch2 Web UI started successfully!");
             LogViewerTarget.Register(app.Services.GetRequiredService<InstanceLogService>());
 
-            // Register core dashboard widgets
-            var widgetRegistry = app.Services.GetRequiredService<WidgetRegistry>();
-            widgetRegistry.Register(new WidgetDescriptor
-            {
-                Id = "core.welcome",
-                DisplayName = "Welcome",
-                Icon = Icons.Material.Filled.Home,
-                ColSpan = 6, RowSpan = 1,
-                Content = () => b => { b.OpenComponent<WelcomeWidget>(0); b.CloseComponent(); }
-            });
-            widgetRegistry.Register(new WidgetDescriptor
-            {
-                Id = "core.active_instances",
-                DisplayName = "Active Instances",
-                Icon = Icons.Material.Filled.Dns,
-                ColSpan = 6, RowSpan = 1,
-                Content = () => b => { b.OpenComponent<ActiveInstancesWidget>(0); b.CloseComponent(); }
-            });
-            widgetRegistry.Register(new WidgetDescriptor
-            {
-                Id = "core.recent_logs",
-                DisplayName = "Recent Logs",
-                Icon = Icons.Material.Filled.Article,
-                ColSpan = 6, RowSpan = 2,
-                Content = () => b => { b.OpenComponent<RecentLogsWidget>(0); b.CloseComponent(); }
-            });
-            widgetRegistry.Register(new WidgetDescriptor
-            {
-                Id = "core.quick_stats",
-                DisplayName = "Quick Stats",
-                Icon = Icons.Material.Filled.BarChart,
-                ColSpan = 4, RowSpan = 2,
-                Content = () => b => { b.OpenComponent<QuickStatsWidget>(0); b.CloseComponent(); }
-            });
-            widgetRegistry.Register(new WidgetDescriptor
-            {
-                Id = "core.server_status",
-                DisplayName = "Server Status",
-                Icon = Icons.Material.Filled.Monitor,
-                ColSpan = 6, RowSpan = 1,
-                Content = () => b => { b.OpenComponent<ServerStatusWidget>(0); b.CloseComponent(); }
-            });
-            widgetRegistry.Register(new WidgetDescriptor
-            {
-                Id = "core.quick_actions",
-                DisplayName = "Quick Actions",
-                Icon = Icons.Material.Filled.Bolt,
-                ColSpan = 3, RowSpan = 1,
-                Content = () => b => { b.OpenComponent<QuickActionsWidget>(0); b.CloseComponent(); },
-                ConfigComponent = widget => b => 
-                { 
-                    b.OpenComponent<QuickActionsWidgetConfig>(0);
-                    b.AddAttribute(1, "Widget", widget);
-                    b.CloseComponent(); 
-                }
-            });
-            widgetRegistry.Register(new WidgetDescriptor
-            {
-                Id = "core.errors",
-                DisplayName = "Errors & Warnings",
-                Icon = Icons.Material.Filled.Warning,
-                ColSpan = 6, RowSpan = 2,
-                Content = () => b => { b.OpenComponent<ErrorsWidget>(0); b.CloseComponent(); }
-            });
+            // Wire up metrics service to instance manager
+            var instanceManager = app.Services.GetRequiredService<InstanceManager>();
+            var metricsService = app.Services.GetRequiredService<InstanceMetricsService>();
+            instanceManager.SetMetricsService(metricsService);
 
-            // Register instance info widgets
-            widgetRegistry.Register(new WidgetDescriptor
-            {
-                Id = "instance.world",
-                DisplayName = "World",
-                Icon = Icons.Material.Filled.Public,
-                ColSpan = 4, RowSpan = 1,
-                Content = () => b => { b.OpenComponent<InstanceWorldWidget>(0); b.CloseComponent(); },
-                ConfigComponent = widget => b =>
-                {
-                    b.OpenComponent<InstanceWidgetConfigBase>(0);
-                    b.CloseComponent();
-                }
-            });
-            widgetRegistry.Register(new WidgetDescriptor
-            {
-                Id = "instance.profile",
-                DisplayName = "Profile Name",
-                Icon = Icons.Material.Filled.Description,
-                ColSpan = 4, RowSpan = 1,
-                Content = () => b => { b.OpenComponent<InstanceProfileWidget>(0); b.CloseComponent(); },
-                ConfigComponent = widget => b =>
-                {
-                    b.OpenComponent<InstanceWidgetConfigBase>(0);
-                    b.CloseComponent();
-                }
-            });
-            widgetRegistry.Register(new WidgetDescriptor
-            {
-                Id = "instance.host",
-                DisplayName = "Host Machine",
-                Icon = Icons.Material.Filled.Computer,
-                ColSpan = 4, RowSpan = 1,
-                Content = () => b => { b.OpenComponent<InstanceHostWidget>(0); b.CloseComponent(); },
-                ConfigComponent = widget => b =>
-                {
-                    b.OpenComponent<InstanceWidgetConfigBase>(0);
-                    b.CloseComponent();
-                }
-            });
-            widgetRegistry.Register(new WidgetDescriptor
-            {
-                Id = "instance.address",
-                DisplayName = "Address",
-                Icon = Icons.Material.Filled.LocationOn,
-                ColSpan = 4, RowSpan = 1,
-                Content = () => b => { b.OpenComponent<InstanceAddressWidget>(0); b.CloseComponent(); },
-                ConfigComponent = widget => b =>
-                {
-                    b.OpenComponent<InstanceWidgetConfigBase>(0);
-                    b.CloseComponent();
-                }
-            });
-            widgetRegistry.Register(new WidgetDescriptor
-            {
-                Id = "instance.version",
-                DisplayName = "Torch Version",
-                Icon = Icons.Material.Filled.Info,
-                ColSpan = 4, RowSpan = 1,
-                Content = () => b => { b.OpenComponent<InstanceVersionWidget>(0); b.CloseComponent(); },
-                ConfigComponent = widget => b =>
-                {
-                    b.OpenComponent<InstanceWidgetConfigBase>(0);
-                    b.CloseComponent();
-                }
-            });
-            widgetRegistry.Register(new WidgetDescriptor
-            {
-                Id = "instance.uptime",
-                DisplayName = "Uptime",
-                Icon = Icons.Material.Filled.Schedule,
-                ColSpan = 4, RowSpan = 1,
-                Content = () => b => { b.OpenComponent<InstanceUptimeWidget>(0); b.CloseComponent(); },
-                ConfigComponent = widget => b =>
-                {
-                    b.OpenComponent<InstanceWidgetConfigBase>(0);
-                    b.CloseComponent();
-                }
-            });
-            widgetRegistry.Register(new WidgetDescriptor
-            {
-                Id = "instance.state",
-                DisplayName = "Current State",
-                Icon = Icons.Material.Filled.PlayCircle,
-                ColSpan = 4, RowSpan = 1,
-                Content = () => b => { b.OpenComponent<InstanceStateWidget>(0); b.CloseComponent(); },
-                ConfigComponent = widget => b =>
-                {
-                    b.OpenComponent<InstanceWidgetConfigBase>(0);
-                    b.CloseComponent();
-                }
-            });
+            // Auto-register widgets from attributes
+            var widgetRegistry = app.Services.GetRequiredService<WidgetRegistry>();
+            widgetRegistry.AutoRegisterWidgets(typeof(Program).Assembly);
             Console.WriteLine($"ConfigPath: {config.filePath}");
             Console.WriteLine($"Panel: {config.PanelName}");
             Console.WriteLine($"Port: {config.Port}");

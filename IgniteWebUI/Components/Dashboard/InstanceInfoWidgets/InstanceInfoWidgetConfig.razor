@@ -1,0 +1,118 @@
+@using IgniteWebUI.Models.Dashboard
+@using IgniteWebUI.Services.InstanceServices
+@using MudBlazor
+@inject InstanceManager InstanceManager
+
+<MudStack Spacing="3">
+    <MudText Typo="Typo.h6">Instance Info Configuration</MudText>
+
+    <MudSelect T="string" 
+               Label="Select Instance" 
+               Value="_selectedInstanceId"
+               ValueChanged="value => UpdateInstanceFilter(value)"
+               Variant="Variant.Outlined"
+               AnchorOrigin="Origin.BottomCenter">
+        <MudSelectItem T="string" Value="@string.Empty">-- Select an Instance --</MudSelectItem>
+        @foreach (var instance in _instances)
+        {
+            <MudSelectItem T="string" Value="@instance.InstanceID">@instance.Name</MudSelectItem>
+        }
+    </MudSelect>
+
+    <MudDivider />
+
+    <MudText Typo="Typo.subtitle2">Display Fields</MudText>
+
+    <MudStack Spacing="1">
+        <MudCheckBox T="bool" Value="_showWorld" ValueChanged="v => UpdateShowWorld(v)" Label="World" />
+        <MudCheckBox T="bool" Value="_showProfile" ValueChanged="v => UpdateShowProfile(v)" Label="Profile" />
+        <MudCheckBox T="bool" Value="_showHost" ValueChanged="v => UpdateShowHost(v)" Label="Host Machine" />
+        <MudCheckBox T="bool" Value="_showAddress" ValueChanged="v => UpdateShowAddress(v)" Label="Address" />
+        <MudCheckBox T="bool" Value="_showVersion" ValueChanged="v => UpdateShowVersion(v)" Label="Torch Version" />
+        <MudCheckBox T="bool" Value="_showUptime" ValueChanged="v => UpdateShowUptime(v)" Label="Uptime" />
+        <MudCheckBox T="bool" Value="_showState" ValueChanged="v => UpdateShowState(v)" Label="State" />
+    </MudStack>
+
+    <MudDivider />
+
+    <MudText Typo="Typo.caption" Color="Color.Secondary">
+        Select which instance to display and which fields to show.
+    </MudText>
+</MudStack>
+
+@code {
+    [Parameter] public DashboardWidget Widget { get; set; } = default!;
+
+    private List<IgniteWebUI.Models.TorchInstance> _instances = new();
+    private string _selectedInstanceId = string.Empty;
+    private bool _showWorld = true;
+    private bool _showProfile = true;
+    private bool _showHost = true;
+    private bool _showAddress = true;
+    private bool _showVersion = true;
+    private bool _showUptime = true;
+    private bool _showState = true;
+
+    protected override void OnInitialized()
+    {
+        _instances = InstanceManager.ActiveInstances.Values.ToList();
+
+        // Load existing config
+        _selectedInstanceId = Widget?.GetConfig<string>("InstanceId", string.Empty) ?? string.Empty;
+        _showWorld = Widget?.GetConfig<bool>("ShowWorld", true) ?? true;
+        _showProfile = Widget?.GetConfig<bool>("ShowProfile", true) ?? true;
+        _showHost = Widget?.GetConfig<bool>("ShowHost", true) ?? true;
+        _showAddress = Widget?.GetConfig<bool>("ShowAddress", true) ?? true;
+        _showVersion = Widget?.GetConfig<bool>("ShowVersion", true) ?? true;
+        _showUptime = Widget?.GetConfig<bool>("ShowUptime", true) ?? true;
+        _showState = Widget?.GetConfig<bool>("ShowState", true) ?? true;
+    }
+
+    private void UpdateInstanceFilter(string value)
+    {
+        _selectedInstanceId = value;
+        Widget?.SetConfig("InstanceId", _selectedInstanceId);
+    }
+
+    private void UpdateShowWorld(bool value)
+    {
+        _showWorld = value;
+        Widget?.SetConfig("ShowWorld", _showWorld);
+    }
+
+    private void UpdateShowProfile(bool value)
+    {
+        _showProfile = value;
+        Widget?.SetConfig("ShowProfile", _showProfile);
+    }
+
+    private void UpdateShowHost(bool value)
+    {
+        _showHost = value;
+        Widget?.SetConfig("ShowHost", _showHost);
+    }
+
+    private void UpdateShowAddress(bool value)
+    {
+        _showAddress = value;
+        Widget?.SetConfig("ShowAddress", _showAddress);
+    }
+
+    private void UpdateShowVersion(bool value)
+    {
+        _showVersion = value;
+        Widget?.SetConfig("ShowVersion", _showVersion);
+    }
+
+    private void UpdateShowUptime(bool value)
+    {
+        _showUptime = value;
+        Widget?.SetConfig("ShowUptime", _showUptime);
+    }
+
+    private void UpdateShowState(bool value)
+    {
+        _showState = value;
+        Widget?.SetConfig("ShowState", _showState);
+    }
+}

@@ -40,12 +40,19 @@ public class DashboardWidget
     /// <summary>Reads a config value, falling back to <paramref name="defaultValue"/> if the key is missing or the wrong type.</summary>
     public T GetConfig<T>(string key, T defaultValue = default!)
     {
-        if (Config.TryGetValue(key, out var element))
+        if (Config == null || !Config.TryGetValue(key, out var element))
         {
-            try { return JsonSerializer.Deserialize<T>(element.GetRawText())!; }
-            catch { /* fall through */ }
+            return defaultValue;
         }
-        return defaultValue;
+
+        try 
+        { 
+            return JsonSerializer.Deserialize<T>(element.GetRawText())!; 
+        }
+        catch 
+        { 
+            return defaultValue; 
+        }
     }
 
     /// <summary>Writes a config value, replacing any existing entry for <paramref name="key"/>.</summary>

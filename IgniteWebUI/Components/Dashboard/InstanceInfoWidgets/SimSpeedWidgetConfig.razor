@@ -1,0 +1,63 @@
+@using IgniteWebUI.Models.Dashboard
+@using IgniteWebUI.Services.InstanceServices
+@using MudBlazor
+@inject InstanceManager InstanceManager
+
+<MudStack Spacing="3">
+    <MudText Typo="Typo.h6">Sim Speed Configuration</MudText>
+
+    <MudSelect T="string" 
+               Label="Select Instance" 
+               Value="_selectedInstanceId"
+               ValueChanged="value => UpdateInstanceFilter(value)"
+               Variant="Variant.Outlined"
+               AnchorOrigin="Origin.BottomCenter">
+        <MudSelectItem T="string" Value="@string.Empty">-- Select an Instance --</MudSelectItem>
+        @foreach (var instance in _instances)
+        {
+            <MudSelectItem T="string" Value="@instance.InstanceID">@instance.Name</MudSelectItem>
+        }
+    </MudSelect>
+
+    <MudDivider />
+
+    <MudStack Spacing="2">
+        <MudText Typo="Typo.subtitle2">Display Options</MudText>
+        <MudCheckBox T="bool" Value="_showGraph" ValueChanged="v => UpdateShowGraph(v)" Label="Show Analytics Graph" />
+    </MudStack>
+
+    <MudDivider />
+
+    <MudText Typo="Typo.caption" Color="Color.Secondary">
+        Select which instance to display and toggle the analytics graph.
+    </MudText>
+</MudStack>
+
+@code {
+    [Parameter] public DashboardWidget Widget { get; set; } = default!;
+
+    private List<IgniteWebUI.Models.TorchInstance> _instances = new();
+    private string _selectedInstanceId = string.Empty;
+    private bool _showGraph = false;
+
+    protected override void OnInitialized()
+    {
+        _instances = InstanceManager.ActiveInstances.Values.ToList();
+
+        // Load existing config
+        _selectedInstanceId = Widget?.GetConfig<string>("InstanceId", string.Empty) ?? string.Empty;
+        _showGraph = Widget?.GetConfig<bool>("ShowGraph", false) ?? false;
+    }
+
+    private void UpdateInstanceFilter(string value)
+    {
+        _selectedInstanceId = value;
+        Widget?.SetConfig("InstanceId", _selectedInstanceId);
+    }
+
+    private void UpdateShowGraph(bool value)
+    {
+        _showGraph = value;
+        Widget?.SetConfig("ShowGraph", _showGraph);
+    }
+}

@@ -1,7 +1,10 @@
 @using IgniteWebUI.Services.InstanceServices
+@using IgniteWebUI.Attributes
+@using MudBlazor
 @inject InstanceManager InstanceManager
 @inject NavigationManager Navigation
 @implements IDisposable
+@attribute [WidgetDescriptor("core.active_instances", "Active Instances", Icon = Icons.Material.Filled.Dns, ColSpan = 6)]
 
 <MudCard Elevation="2" Style="height:100%">
     <MudCardHeader>

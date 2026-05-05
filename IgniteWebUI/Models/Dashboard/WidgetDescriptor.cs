@@ -31,7 +31,7 @@ namespace IgniteWebUI.Models.Dashboard
         /// The config component receives the DashboardWidget instance as a cascading parameter.
         /// Return null if the widget doesn't support configuration.
         /// </summary>
-        public Func<DashboardWidget, RenderFragment>? ConfigComponent { get; init; }
+        public Func<DashboardWidget, RenderFragment>? ConfigComponent { get; set; }
 
         /// <summary>
         /// Default config values applied when the widget is first added to a layout.
